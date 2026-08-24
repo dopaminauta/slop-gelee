@@ -104,7 +104,7 @@ QWidget *MainWindow::makePayloadTab()
     auto *favLabel = new QLabel(tr("Favoritos (doble clic para inyectar):"), widget);
     m_favoritesTab = new FavoritesTab(m_favorites, widget);
     layout->addWidget(favLabel);
-    layout->addWidget(m_favoritesTab);
+    layout->addWidget(m_favoritesTab, 1);  // stretch 1: ocupa el espacio vertical libre
 
     layout->addStretch();
 
