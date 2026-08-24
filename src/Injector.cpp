@@ -25,7 +25,7 @@
 
 #include <libusb-1.0/libusb.h>
 
-// Path to the native injection engine (launcher_rcm — a replica of the NXLoader engine,
+// Path to the native injection engine (launcher_rcm, a replica of the NXLoader engine,
 // plain C with USBDEVFS ioctls; the python fusee-launcher port is kept as reference).
 // Se busca en ../tools/ (build tree) y junto al binario (instalado).
 static QString rcmLauncherPath()
@@ -120,7 +120,7 @@ protected:
             // Polling defensivo de la lista (cada ~1s): el hotplug de libusb se
             // pierde los devices re-enumerados por el kernel (unbind/reset) y los
             // devices conectados antes de abrir la app. El script ganador usaba
-            // polling de lsusb — esto replica eso dentro de la GUI.
+            // polling de lsusb, esto replica eso dentro de la GUI.
             if (++m_tick % 10 == 0) {
                 const bool present = scanForRcmDevice();
                 if (present != m_owner->isDeviceConnected()) {
@@ -256,7 +256,7 @@ void Injector::injectPayload(const QString &payloadPath)
         return;
     }
 
-    // Intermezzo (relocator) next to the engine — the 92-byte one (NXLoader pair).
+    // Intermezzo (relocator) next to the engine, the 92-byte one (NXLoader pair).
     const QString relocatorPath =
         QFileInfo(launcherInfo.absolutePath() + QStringLiteral("/intermezzo.bin"))
             .absoluteFilePath();
@@ -269,7 +269,7 @@ void Injector::injectPayload(const QString &payloadPath)
     // Resolver el device path (/dev/bus/usb/BBB/DDD) del Tegra en RCM via libusb.
     // IMPORTANTE: elegir el device de direccion MAS ALTA (el mas nuevo). Los
     // devices quemados quedan enumerados y el primero de la lista puede ser uno
-    // muerto — el RCM recien conectado siempre tiene el numero mas alto.
+    // muerto, el RCM recien conectado siempre tiene el numero mas alto.
     QString devicePath;
     int bestBus = -1;
     int bestAddr = -1;
@@ -338,7 +338,7 @@ void Injector::onProcessFinished(int exitCode, QProcess::ExitStatus exitStatus)
         const QString detail = error.trimmed().isEmpty() ? output.trimmed() : error.trimmed();
 
         // Reintento automatico si el device no estaba listo (read timeout) y
-        // el device sigue presente — el RCM fresco a veces tarda en responder.
+        // el device sigue presente, el RCM fresco a veces tarda en responder.
         const bool retriable = detail.contains(QStringLiteral("fallo al leer device ID")) ||
                                detail.contains(QStringLiteral("no se pudo abrir"));
         if (retriable && m_injectRetries < 3 && isDeviceConnected()) {

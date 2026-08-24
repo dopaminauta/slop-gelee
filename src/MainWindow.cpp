@@ -119,7 +119,7 @@ QWidget *MainWindow::makePayloadTab()
 void MainWindow::setupTrayIcon()
 {
     m_trayIcon = new QSystemTrayIcon(QIcon(QStringLiteral(":/assets/tegrarcm.svg")), this);
-    m_trayIcon->setToolTip(tr("slop gelee — Fusee Gelee payload injector"));
+    m_trayIcon->setToolTip(tr("slop gelee, Fusee Gelee payload injector"));
 
     auto *menu = new QMenu(this);
     QAction *showHideAction = menu->addAction(tr("show/hide"));

@@ -62,7 +62,7 @@ gpl-2.0, same as the original. see [`LICENSE`](LICENSE).
 
 ## credits
 
-- [eliboa](https://github.com/eliboa) — tegrarcmgui
-- [Kate Temkin](https://github.com/ktemkin) / fail0verflow — fusée gelée
-- [CTCaer](https://github.com/CTCaer/hekate) — hekate
-- [SciresM](https://github.com/SciresM) — atmosphère
+- [eliboa](https://github.com/eliboa), tegrarcmgui
+- [Kate Temkin](https://github.com/ktemkin) / fail0verflow, fusée gelée
+- [CTCaer](https://github.com/CTCaer/hekate), hekate
+- [SciresM](https://github.com/SciresM), atmosphère

@@ -1,5 +1,5 @@
 #!/bin/bash
-# build_release.sh — Empaqueta el release portable de slop-gelee
+# build_release.sh, Empaqueta el release portable de slop-gelee
 set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")/.."

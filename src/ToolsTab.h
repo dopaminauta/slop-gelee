@@ -9,7 +9,7 @@
  * Each tool remembers its payload path in QSettings ("tools/<tool>Path"),
  * asking via QFileDialog only the first time (or if the remembered file
  * disappeared). Injection itself is delegated entirely to the shared
- * Injector instance passed in by MainWindow — see SPEC.md section 8.3.
+ * Injector instance passed in by MainWindow, see SPEC.md section 8.3.
  */
 #pragma once
 

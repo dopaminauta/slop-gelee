@@ -1,5 +1,5 @@
 #!/bin/bash
-# install.sh — Instalador de slop-gelee (TegraRcmGUI-Linux)
+# install.sh, Instalador de slop-gelee (TegraRcmGUI-Linux)
 # Uso: ./install.sh [--with-udev]
 #   --with-udev  instala tambien las reglas udev (pide sudo)
 set -euo pipefail

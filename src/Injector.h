@@ -35,7 +35,7 @@ public:
 
     bool isDeviceConnected() const;
 
-    // Acciones (todas async o con timeout — nunca bloquean la UI)
+    // Acciones (todas async o con timeout, nunca bloquean la UI)
     void injectPayload(const QString &payloadPath);
     void startMonitoring();
     void stopMonitoring();
