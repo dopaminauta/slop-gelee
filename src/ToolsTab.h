@@ -36,6 +36,7 @@ private:
     struct Tool {
         QString settingsKey;
         QString displayName;
+        QString defaultPayload;  // nombre del payload por defecto (payloads/tools/)
         QLabel *pathLabel = nullptr;
         QPushButton *runButton = nullptr;
     };
@@ -48,7 +49,6 @@ private:
 
     Injector *m_injector;
     Tool m_shofel2;
-    Tool m_memloader;
     Tool m_biskeydump;
     QPlainTextEdit *m_log;
 };

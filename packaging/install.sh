@@ -27,8 +27,9 @@ echo "[+] udev rules -> ~/.local/udev/"
 
 # 4. Payload de ejemplo
 if [ -f "$SCRIPT_DIR/payloads/hekate_ctcaer_6.5.3.bin" ]; then
-    mkdir -p ~/.local/share/tegrarcm/payloads
+    mkdir -p ~/.local/share/tegrarcm/payloads ~/.local/share/tegrarcm/payloads/tools
     install -m 0644 "$SCRIPT_DIR/payloads/hekate_ctcaer_6.5.3.bin" ~/.local/share/tegrarcm/payloads/
+    install -m 0644 "$SCRIPT_DIR/payloads/tools/"*.bin "$SCRIPT_DIR/payloads/tools/"*.rom ~/.local/share/tegrarcm/payloads/tools/ 2>/dev/null || true
     echo "[+] payload ejemplo -> ~/.local/share/tegrarcm/payloads/"
 fi
 

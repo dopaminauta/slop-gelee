@@ -9,7 +9,9 @@
 #include "ToolsTab.h"
 #include "Injector.h"
 
+#include <QCoreApplication>
 #include <QDateTime>
+#include <QDir>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QGroupBox>
@@ -22,8 +24,33 @@
 
 namespace {
 constexpr const char *kShofel2PathKey = "tools/shofel2Path";
-constexpr const char *kMemloaderPathKey = "tools/memloaderPath";
 constexpr const char *kBiskeydumpPathKey = "tools/biskeydumpPath";
+
+// Payloads por defecto para cada herramienta (instalados por install.sh en
+// ~/.local/share/tegrarcm/payloads/tools/ o junto al binario en ../payloads/tools/).
+constexpr const char *kShofel2DefaultPayload = "shofel2_coreboot.rom";
+constexpr const char *kBiskeydumpDefaultPayload = "biskeydump_usb.bin";
+
+QString defaultToolPayload(const char *fileName)
+{
+    // 1) payloads del release instalado
+    const QDir installed(QDir::homePath() + QStringLiteral("/.local/share/tegrarcm/payloads/tools"));
+    if (QFileInfo::exists(installed.filePath(QString::fromLatin1(fileName)))) {
+        return installed.filePath(QString::fromLatin1(fileName));
+    }
+    // 2) junto al binario (build tree / carpeta portable)
+    const QString appDir = QCoreApplication::applicationDirPath();
+    const QStringList candidates = {
+        appDir + QStringLiteral("/../payloads/tools/") + QString::fromLatin1(fileName),
+        appDir + QStringLiteral("/payloads/tools/") + QString::fromLatin1(fileName),
+    };
+    for (const QString &candidate : candidates) {
+        if (QFileInfo::exists(candidate)) {
+            return candidate;
+        }
+    }
+    return {};
+}
 }
 
 ToolsTab::ToolsTab(Injector *injector, QWidget *parent)
@@ -33,15 +60,13 @@ ToolsTab::ToolsTab(Injector *injector, QWidget *parent)
 {
     m_shofel2.settingsKey = QString::fromLatin1(kShofel2PathKey);
     m_shofel2.displayName = tr("Linux (ShofEL2)");
-    m_memloader.settingsKey = QString::fromLatin1(kMemloaderPathKey);
-    m_memloader.displayName = tr("memloader (montar eMMC/SD)");
+    m_shofel2.defaultPayload = QString::fromLatin1(kShofel2DefaultPayload);
     m_biskeydump.settingsKey = QString::fromLatin1(kBiskeydumpPathKey);
     m_biskeydump.displayName = tr("biskeydump (claves BIS)");
+    m_biskeydump.defaultPayload = QString::fromLatin1(kBiskeydumpDefaultPayload);
 
     auto *layout = new QVBoxLayout(this);
     layout->addWidget(makeToolGroup(m_shofel2, tr("Correr Linux"), tr("Run Linux (ShofEL2)")));
-    layout->addWidget(makeToolGroup(
-        m_memloader, tr("Montar eMMC/SD"), tr("Mount eMMC/SD (memloader)")));
     layout->addWidget(makeToolGroup(
         m_biskeydump, tr("Volcar claves BIS"), tr("Dump BIS keys")));
 
@@ -73,7 +98,16 @@ QWidget *ToolsTab::makeToolGroup(Tool &tool, const QString &groupTitle, const QS
     groupLayout->addWidget(tool.runButton);
 
     const QSettings settings;
-    const QString savedPath = settings.value(tool.settingsKey).toString();
+    QString savedPath = settings.value(tool.settingsKey).toString();
+    if (savedPath.isEmpty() || !QFileInfo::exists(savedPath)) {
+        // Payload por defecto de la herramienta si no hay uno guardado/válido.
+        savedPath = defaultToolPayload(tool.defaultPayload.toLatin1().constData());
+        if (!savedPath.isEmpty()) {
+            tool.pathLabel->setText(savedPath);
+            QSettings writable;
+            writable.setValue(tool.settingsKey, savedPath);
+        }
+    }
     if (!savedPath.isEmpty() && QFileInfo::exists(savedPath)) {
         tool.pathLabel->setText(savedPath);
     }
@@ -104,12 +138,18 @@ void ToolsTab::runTool(Tool &tool)
     QSettings settings;
     QString path = settings.value(tool.settingsKey).toString();
     if (path.isEmpty() || !QFileInfo::exists(path)) {
+        // Default de la herramienta antes de pedir el dialogo.
+        path = defaultToolPayload(tool.defaultPayload.toLatin1().constData());
+    }
+    if (path.isEmpty() || !QFileInfo::exists(path)) {
         path = QFileDialog::getOpenFileName(
             this, tr("Seleccionar payload para %1").arg(tool.displayName), QString(),
             tr("Bin files (*.bin);;All files (*)"));
         if (path.isEmpty()) {
             return;
         }
+        setPath(tool, path);
+    } else if (settings.value(tool.settingsKey).toString().isEmpty()) {
         setPath(tool, path);
     }
 
@@ -121,7 +161,6 @@ void ToolsTab::runTool(Tool &tool)
 void ToolsTab::setButtonsEnabled(bool enabled)
 {
     m_shofel2.runButton->setEnabled(enabled);
-    m_memloader.runButton->setEnabled(enabled);
     m_biskeydump.runButton->setEnabled(enabled);
 }
 
