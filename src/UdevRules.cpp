@@ -53,7 +53,7 @@ void UdevRules::install()
         "cp '%1' /etc/udev/rules.d/50-tegrarcm.rules && "
         "udevadm control --reload-rules && udevadm trigger").arg(source);
 
-    emit logMessage(tr("Instalando reglas udev (se pedira autenticacion)..."));
+    emit logMessage(tr("Installing udev rules (authentication required)..."));
 
     m_process = new QProcess(this);
     connect(m_process, &QProcess::finished, this, &UdevRules::onProcessFinished);
@@ -77,7 +77,7 @@ void UdevRules::onProcessFinished(int exitCode, QProcess::ExitStatus exitStatus)
     const bool success = (exitStatus == QProcess::NormalExit) && (exitCode == 0);
 
     if (success) {
-        emit logMessage(tr("Reglas udev instaladas correctamente."));
+        emit logMessage(tr("udev rules installed successfully."));
         if (!output.trimmed().isEmpty()) {
             emit logMessage(output.trimmed());
         }
@@ -101,7 +101,7 @@ void UdevRules::onProcessError(QProcess::ProcessError error)
     if (m_process == nullptr) {
         return;
     }
-    emit logMessage(tr("Error de proceso (%1): %2")
+    emit logMessage(tr("Process error (%1): %2")
                          .arg(static_cast<int>(error))
                          .arg(m_process->errorString()));
     emit finished(false);

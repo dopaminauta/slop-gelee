@@ -25,8 +25,8 @@
 
 #include <libusb-1.0/libusb.h>
 
-// Ruta al motor de inyeccion nativo (launcher_rcm — replica del motor de NXLoader,
-// C puro con ioctls USBDEVFS; el port python del fusee-launcher quedo como referencia).
+// Path to the native injection engine (launcher_rcm — a replica of the NXLoader engine,
+// plain C with USBDEVFS ioctls; the python fusee-launcher port is kept as reference).
 // Se busca en ../tools/ (build tree) y junto al binario (instalado).
 static QString rcmLauncherPath()
 {
@@ -43,9 +43,9 @@ static QString rcmLauncherPath()
     return candidates.first();
 }
 
-// Ruta al motor de inyeccion python (fusee-launcher, ktemkin/fail0verflow, GPL-2.0).
-// Mismo diseno que el original: el GUI invoca un binario externo que hace
-// la inyeccion USB real (original: TegraRcmSmash.exe; port: fusee-launcher.py).
+// Path to the python injection engine (fusee-launcher, ktemkin/fail0verflow, GPL-2.0).
+// Same design as the original: the GUI invokes an external binary that does
+// the real USB injection (original: TegraRcmSmash.exe; port: fusee-launcher.py).
 // Se busca en ../tools/ (build tree) y junto al binario (instalado).
 static QString fuseeLauncherPath()
 {
@@ -108,7 +108,7 @@ protected:
         } else {
             emit m_owner->logMessage(
                 QStringLiteral("libusb no soporta hotplug en este sistema; "
-                                "la deteccion de dispositivo quedara inactiva."));
+                                "device detection is inactive."));
         }
 
         while (!m_stopRequested.load()) {
@@ -230,7 +230,7 @@ void Injector::stopMonitoring()
 void Injector::injectPayload(const QString &payloadPath)
 {
     if (m_process != nullptr) {
-        emit injectionFailed(QStringLiteral("Ya hay una inyeccion en curso."));
+        emit injectionFailed(QStringLiteral("Injection already in progress."));
         return;
     }
 
@@ -247,22 +247,22 @@ void Injector::injectPayload(const QString &payloadPath)
         return;
     }
 
-    // Motor nativo: launcher_rcm (replica del motor de NXLoader).
+    // Native engine: launcher_rcm (replica of the NXLoader engine).
     const QString launcherPath = rcmLauncherPath();
     const QFileInfo launcherInfo(launcherPath);
     if (!launcherInfo.exists()) {
         emit injectionFailed(
-            QStringLiteral("Motor de inyeccion no encontrado: %1").arg(launcherPath));
+            QStringLiteral("Injection engine not found: %1").arg(launcherPath));
         return;
     }
 
-    // Intermezzo (relocator) al lado del motor — el de 92 bytes (par NXLoader).
+    // Intermezzo (relocator) next to the engine — the 92-byte one (NXLoader pair).
     const QString relocatorPath =
         QFileInfo(launcherInfo.absolutePath() + QStringLiteral("/intermezzo.bin"))
             .absoluteFilePath();
     if (!QFileInfo(relocatorPath).exists()) {
         emit injectionFailed(
-            QStringLiteral("Intermezzo no encontrado junto al motor: %1").arg(relocatorPath));
+            QStringLiteral("Intermezzo not found next to the engine: %1").arg(relocatorPath));
         return;
     }
 
@@ -295,11 +295,11 @@ void Injector::injectPayload(const QString &payloadPath)
     }
     if (devicePath.isEmpty()) {
         emit injectionFailed(
-            QStringLiteral("Dispositivo RCM no encontrado. Conecta la Switch en modo RCM."));
+            QStringLiteral("RCM device not found. Connect the Switch in RCM mode."));
         return;
     }
 
-    emit logMessage(QStringLiteral("Inyectando payload: %1").arg(payloadPath));
+    emit logMessage(QStringLiteral("Injecting payload: %1").arg(payloadPath));
 
     // El hotplug de libusb se dispara antes de que udev cree el node del device;
     // esperar un instante para que /dev/bus/usb/BBB/DDD exista (el RCM se agota
@@ -343,7 +343,7 @@ void Injector::onProcessFinished(int exitCode, QProcess::ExitStatus exitStatus)
                                detail.contains(QStringLiteral("no se pudo abrir"));
         if (retriable && m_injectRetries < 3 && isDeviceConnected()) {
             ++m_injectRetries;
-            emit logMessage(QStringLiteral("Reintentando (%1/3)...").arg(m_injectRetries));
+            emit logMessage(QStringLiteral("Retrying (%1/3)...").arg(m_injectRetries));
             m_process->deleteLater();
             m_process = nullptr;
             QTimer::singleShot(600, this, [this]() {

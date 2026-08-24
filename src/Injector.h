@@ -7,7 +7,7 @@
  * published by the Free Software Foundation.
  *
  * libusb-1.0 wrapper: device detection (VID 0x0955 / PID 0x7321, NVIDIA
- * APX in RCM) via hotplug, and (from Fase 1.5 onward) payload injection.
+ * APX in RCM) via hotplug, and (from phase 1.5 onward) payload injection.
  * See SPEC.md section 5 for the libusbk -> libusb-1.0 mapping this class
  * is built against, and section 7 for the UI/logic contract it implements.
  */
@@ -62,8 +62,8 @@ private:
     QProcess *m_process = nullptr;
     std::atomic<bool> m_deviceConnected{false};
 
-    // Reintentos de inyeccion: el device recien conectado puede no estar listo
-    // cuando el hotplug lo detecta (el script ganador esperaba enumeracion completa).
+    // Injection retries: a freshly connected device may not be ready
+    // when hotplug detects it (the winning script waited for full enumeration).
     int m_injectRetries = 0;
     QString m_retryDevicePath;
     QString m_retryPayloadPath;

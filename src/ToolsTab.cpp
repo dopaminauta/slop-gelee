@@ -64,22 +64,22 @@ ToolsTab::ToolsTab(Injector *injector, QWidget *parent)
     m_shofel2.displayName = tr("Linux (ShofEL2)");
     m_shofel2.defaultPayload = QString::fromLatin1(kShofel2DefaultPayload);
     m_biskeydump.settingsKey = QString::fromLatin1(kBiskeydumpPathKey);
-    m_biskeydump.displayName = tr("biskeydump (claves BIS)");
+    m_biskeydump.displayName = tr("biskeydump (BIS keys)");
     m_biskeydump.defaultPayload = QString::fromLatin1(kBiskeydumpDefaultPayload);
     m_lockpick.settingsKey = QString::fromLatin1(kLockpickPathKey);
-    m_lockpick.displayName = tr("Lockpick_RCM (claves)");
+    m_lockpick.displayName = tr("Lockpick_RCM (keys)");
     m_lockpick.defaultPayload = QString::fromLatin1(kLockpickDefaultPayload);
 
     auto *layout = new QVBoxLayout(this);
-    layout->addWidget(makeToolGroup(m_shofel2, tr("Correr Linux"), tr("Run Linux (ShofEL2)")));
+    layout->addWidget(makeToolGroup(m_shofel2, tr("Run Linux"), tr("Run Linux (ShofEL2)")));
     layout->addWidget(makeToolGroup(
-        m_biskeydump, tr("Volcar claves BIS"), tr("Dump BIS keys")));
+        m_biskeydump, tr("Dump BIS keys"), tr("Dump BIS keys")));
     layout->addWidget(makeToolGroup(
-        m_lockpick, tr("Volcar claves (Lockpick_RCM)"), tr("Dump keys (Lockpick_RCM)")));
+        m_lockpick, tr("Dump keys (Lockpick_RCM)"), tr("Dump keys (Lockpick_RCM)")));
 
     m_log->setReadOnly(true);
     m_log->setMaximumBlockCount(2000);
-    layout->addWidget(new QLabel(tr("Registro:"), this));
+    layout->addWidget(new QLabel(tr("Log:"), this));
     layout->addWidget(m_log, 1);
 
     connect(m_injector, &Injector::logMessage, this, &ToolsTab::onLogMessage);
@@ -93,9 +93,9 @@ QWidget *ToolsTab::makeToolGroup(Tool &tool, const QString &groupTitle, const QS
     auto *groupLayout = new QVBoxLayout(group);
 
     auto *pathRow = new QHBoxLayout;
-    tool.pathLabel = new QLabel(tr("Sin payload seleccionado"), group);
+    tool.pathLabel = new QLabel(tr("No payload selected"), group);
     tool.pathLabel->setWordWrap(true);
-    auto *changeButton = new QPushButton(tr("Cambiar payload..."), group);
+    auto *changeButton = new QPushButton(tr("Change payload..."), group);
     pathRow->addWidget(tool.pathLabel, 1);
     pathRow->addWidget(changeButton);
 
@@ -107,7 +107,7 @@ QWidget *ToolsTab::makeToolGroup(Tool &tool, const QString &groupTitle, const QS
     const QSettings settings;
     QString savedPath = settings.value(tool.settingsKey).toString();
     if (savedPath.isEmpty() || !QFileInfo::exists(savedPath)) {
-        // Payload por defecto de la herramienta si no hay uno guardado/válido.
+        // Default payload for the tool if none is saved/valid.
         savedPath = defaultToolPayload(tool.defaultPayload.toLatin1().constData());
         if (!savedPath.isEmpty()) {
             tool.pathLabel->setText(savedPath);
@@ -121,7 +121,7 @@ QWidget *ToolsTab::makeToolGroup(Tool &tool, const QString &groupTitle, const QS
 
     connect(changeButton, &QPushButton::clicked, this, [this, &tool]() {
         const QString path = QFileDialog::getOpenFileName(
-            this, tr("Seleccionar payload"), QString(), tr("Bin files (*.bin);;All files (*)"));
+            this, tr("Select payload"), QString(), tr("Bin files (*.bin);;All files (*)"));
         if (path.isEmpty()) {
             return;
         }
@@ -150,7 +150,7 @@ void ToolsTab::runTool(Tool &tool)
     }
     if (path.isEmpty() || !QFileInfo::exists(path)) {
         path = QFileDialog::getOpenFileName(
-            this, tr("Seleccionar payload para %1").arg(tool.displayName), QString(),
+            this, tr("Select payload for %1").arg(tool.displayName), QString(),
             tr("Bin files (*.bin);;All files (*)"));
         if (path.isEmpty()) {
             return;
@@ -160,7 +160,7 @@ void ToolsTab::runTool(Tool &tool)
         setPath(tool, path);
     }
 
-    appendLog(tr("%1: inyectando %2").arg(tool.displayName, path));
+    appendLog(tr("%1: injecting %2").arg(tool.displayName, path));
     setButtonsEnabled(false);
     m_injector->injectPayload(path);
 }
@@ -186,7 +186,7 @@ void ToolsTab::onLogMessage(const QString &message)
 void ToolsTab::onPayloadInjected(const QString &path, int bytesSent)
 {
     Q_UNUSED(bytesSent)
-    appendLog(tr("Payload inyectado: %1").arg(path));
+    appendLog(tr("Payload injected: %1").arg(path));
     setButtonsEnabled(true);
 }
 

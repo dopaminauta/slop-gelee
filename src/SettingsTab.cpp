@@ -27,9 +27,9 @@
 
 SettingsTab::SettingsTab(QWidget *parent)
     : QWidget(parent)
-    , m_autoInjectCheck(new QCheckBox(tr("Auto-enviar al conectar el dispositivo"), this))
-    , m_minimizeToTrayCheck(new QCheckBox(tr("Minimizar a la bandeja del sistema"), this))
-    , m_runAtStartupCheck(new QCheckBox(tr("Iniciar automaticamente con el sistema"), this))
+    , m_autoInjectCheck(new QCheckBox(tr("Auto-inject when device connects"), this))
+    , m_minimizeToTrayCheck(new QCheckBox(tr("Minimize to system tray"), this))
+    , m_runAtStartupCheck(new QCheckBox(tr("Start automatically with the system"), this))
     , m_log(new QPlainTextEdit(this))
     , m_udevRules(new UdevRules(this))
 {
@@ -38,15 +38,15 @@ SettingsTab::SettingsTab(QWidget *parent)
     layout->addWidget(m_minimizeToTrayCheck);
     layout->addWidget(m_runAtStartupCheck);
 
-    auto *openFolderButton = new QPushButton(tr("Abrir carpeta de payloads"), this);
+    auto *openFolderButton = new QPushButton(tr("Open payloads folder"), this);
     layout->addWidget(openFolderButton);
 
-    auto *installUdevButton = new QPushButton(tr("Instalar reglas udev"), this);
+    auto *installUdevButton = new QPushButton(tr("Install udev rules"), this);
     layout->addWidget(installUdevButton);
 
     m_log->setReadOnly(true);
     m_log->setMaximumBlockCount(2000);
-    layout->addWidget(new QLabel(tr("Registro:"), this));
+    layout->addWidget(new QLabel(tr("Log:"), this));
     layout->addWidget(m_log, 1);
 
     QSettings settings;

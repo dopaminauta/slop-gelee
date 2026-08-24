@@ -51,8 +51,8 @@ MainWindow::MainWindow(QWidget *parent)
     resize(640, 480);
 
     m_tabs->addTab(makePayloadTab(), tr("main"));
-    m_tabs->addTab(new ToolsTab(m_injector, m_tabs), tr("Herramientas"));
-    m_tabs->addTab(new SettingsTab(m_tabs), tr("Configuracion"));
+    m_tabs->addTab(new ToolsTab(m_injector, m_tabs), tr("Tools"));
+    m_tabs->addTab(new SettingsTab(m_tabs), tr("Settings"));
     setCentralWidget(m_tabs);
 
     statusBar()->addWidget(m_deviceStatusLabel);
@@ -93,15 +93,15 @@ QWidget *MainWindow::makePayloadTab()
     m_injectButton = new QPushButton(tr("Inject"), widget);
     m_injectButton->setEnabled(false);
 
-    m_saveAsFavoriteButton = new QPushButton(tr("Guardar como favorito"), widget);
+    m_saveAsFavoriteButton = new QPushButton(tr("Save as favorite"), widget);
     m_saveAsFavoriteButton->setEnabled(false);
 
     layout->addLayout(selectRow);
     layout->addWidget(m_injectButton);
     layout->addWidget(m_saveAsFavoriteButton);
 
-    // Favoritos integrados en la pestana main (doble clic para inyectar).
-    auto *favLabel = new QLabel(tr("Favoritos (doble clic para inyectar):"), widget);
+    // Favorites integrated into the main tab (double-click to inject).
+    auto *favLabel = new QLabel(tr("Favorites (double-click to inject):"), widget);
     m_favoritesTab = new FavoritesTab(m_favorites, widget);
     layout->addWidget(favLabel);
     layout->addWidget(m_favoritesTab, 1);  // stretch 1: ocupa el espacio vertical libre
@@ -122,7 +122,7 @@ void MainWindow::setupTrayIcon()
     m_trayIcon->setToolTip(tr("slop gelee — Fusee Gelee payload injector"));
 
     auto *menu = new QMenu(this);
-    QAction *showHideAction = menu->addAction(tr("Mostrar/Ocultar"));
+    QAction *showHideAction = menu->addAction(tr("Show/Hide"));
     connect(showHideAction, &QAction::triggered, this, [this]() {
         setVisible(!isVisible());
         if (isVisible()) {
@@ -132,7 +132,7 @@ void MainWindow::setupTrayIcon()
     });
 
     menu->addSeparator();
-    QAction *quitAction = menu->addAction(tr("Salir"));
+    QAction *quitAction = menu->addAction(tr("Quit"));
     connect(quitAction, &QAction::triggered, qApp, &QApplication::quit);
 
     m_trayIcon->setContextMenu(menu);
@@ -231,7 +231,7 @@ void MainWindow::onDeviceConnected()
     m_deviceStatusLabel->setText(tr("Device found (RCM)"));
     updateInjectEnabled();
 
-    // Auto-inyeccion: OPCIONAL, default OFF (decision de producto del usuario).
+    // Auto-injection: OPTIONAL, default OFF (user product decision).
     QSettings settings;
     const bool autoInject = settings.value(SettingsTab::kAutoInjectKey, false).toBool();
     const QString path = defaultPayloadPath();
@@ -258,7 +258,7 @@ void MainWindow::onInjectionFailed(const QString &errorMessage)
 {
     m_deviceStatusLabel->setText(tr("Injection failed"));
     statusBar()->showMessage(errorMessage, 8000);
-    // Persistir errores tambien (los exit != 0 del motor no pasan por onLogMessage)
+    // Persist errors too (non-zero exits from the engine do not go through onLogMessage)
     onLogMessage(QStringLiteral("ERROR: %1").arg(errorMessage));
     updateInjectEnabled();
 }
@@ -267,7 +267,7 @@ void MainWindow::onLogMessage(const QString &message)
 {
     qDebug() << message;
     // Log persistente para diagnostico (reversible; ayuda a ver el output del
-    // motor de inyeccion sin depender de la ventana).
+    // injection engine without depending on the window).
     QDir logDir(QDir::homePath() + QStringLiteral("/.local/share/tegrarcm"));
     logDir.mkpath(QStringLiteral("."));
     QFile logFile(logDir.filePath(QStringLiteral("log.txt")));

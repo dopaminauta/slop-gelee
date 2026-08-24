@@ -7,33 +7,33 @@ set -euo pipefail
 APP_NAME="tegrarcm-gui"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-echo "=== slop-gelee: instalando en ~/.local ==="
+echo "=== slop-gelee: installing into ~/.local ==="
 
-# 1. Binario
+# 1. binary
 mkdir -p ~/.local/bin
 install -m 0755 "$SCRIPT_DIR/tegrarcm-gui" ~/.local/bin/
-echo "[+] binario -> ~/.local/bin/tegrarcm-gui"
+echo "[+] binary -> ~/.local/bin/tegrarcm-gui"
 
-# 2. Motor de inyeccion (launcher_rcm + intermezzo) al lado del binario
+# 2. injection engine (launcher_rcm + intermezzo) next to the binary
 mkdir -p ~/.local/tools
 install -m 0755 "$SCRIPT_DIR/tools/launcher_rcm" ~/.local/tools/
 install -m 0644 "$SCRIPT_DIR/tools/intermezzo.bin" ~/.local/tools/
-echo "[+] motor -> ~/.local/tools/ (launcher_rcm + intermezzo.bin)"
+echo "[+] engine -> ~/.local/tools/ (launcher_rcm + intermezzo.bin)"
 
-# 3. Reglas udev (copia; activacion con --with-udev)
+# 3. udev rules (copy; activation with --with-udev)
 mkdir -p ~/.local/udev
 install -m 0644 "$SCRIPT_DIR/udev/50-tegrarcm.rules" ~/.local/udev/
 echo "[+] udev rules -> ~/.local/udev/"
 
-# 4. Payload de ejemplo
+# 4. sample payload
 if [ -f "$SCRIPT_DIR/payloads/hekate_ctcaer_6.5.3.bin" ]; then
     mkdir -p ~/.local/share/tegrarcm/payloads ~/.local/share/tegrarcm/payloads/tools
     install -m 0644 "$SCRIPT_DIR/payloads/hekate_ctcaer_6.5.3.bin" ~/.local/share/tegrarcm/payloads/
     install -m 0644 "$SCRIPT_DIR/payloads/tools/"*.bin "$SCRIPT_DIR/payloads/tools/"*.rom ~/.local/share/tegrarcm/payloads/tools/ 2>/dev/null || true
-    echo "[+] payload ejemplo -> ~/.local/share/tegrarcm/payloads/"
+    echo "[+] sample payload -> ~/.local/share/tegrarcm/payloads/"
 fi
 
-# 5. Icono + entrada de menu
+# 5. icon + menu entry
 if [ -f "$SCRIPT_DIR/assets/slop-gelee.svg" ]; then
     mkdir -p ~/.local/share/icons/hicolor/scalable/apps
     install -m 0644 "$SCRIPT_DIR/assets/slop-gelee.svg" ~/.local/share/icons/hicolor/scalable/apps/
@@ -43,9 +43,7 @@ cat > ~/.local/share/applications/slop-gelee.desktop << EOF
 [Desktop Entry]
 Type=Application
 Name=slop gelee
-Name[es]=slop gelee
 Comment=Fusée Gelée payload injector for Nintendo Switch (RCM mode)
-Comment[es]=Inyector de payloads Fusée Gelée para Nintendo Switch (modo RCM)
 Exec=tegrarcm-gui
 Icon=slop-gelee
 Terminal=false
@@ -53,17 +51,17 @@ Categories=Utility;System;Qt;
 Keywords=switch;rcm;payload;hekate;fusee;slop;gelee;
 EOF
 kbuildsycoca6 2>/dev/null || true
-echo "[+] .desktop + icono instalados (slop gelee)"
+echo "[+] .desktop + icon installed (slop gelee)"
 
 # 6. Udev (opcional)
 if [ "${1:-}" = "--with-udev" ]; then
-    echo "[*] Instalando reglas udev en /etc/udev/rules.d/ (sudo)..."
+    echo "[*] Installing udev rules in /etc/udev/rules.d/ (sudo)..."
     sudo cp "$SCRIPT_DIR/udev/50-tegrarcm.rules" /etc/udev/rules.d/
     sudo udevadm control --reload
     sudo udevadm trigger
-    echo "[+] reglas udev activas"
+    echo "[+] udev rules active"
 fi
 
 echo ""
-echo "=== Listo. Abri con: tegrarcm-gui ==="
-echo "=== Tip: conecta la Switch en RCM RECIEN armada (el modo RCM se agota solo) ==="
+echo "=== done. run: tegrarcm-gui ==="
+echo "=== tip: connect the Switch in RCM freshly armed (RCM mode expires on its own) ==="

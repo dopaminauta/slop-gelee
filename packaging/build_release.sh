@@ -9,12 +9,12 @@ NAME="slop-gelee-v${VERSION}-linux-x86_64"
 STAGE="/tmp/${NAME}"
 PKG="/tmp/${NAME}.tar.gz"
 
-echo "=== 1/4 Compilando Release ==="
+echo "=== 1/4 building release ==="
 cmake -B build-release -DCMAKE_BUILD_TYPE=Release > /dev/null
 cmake --build build-release -j"$(nproc)" 2>&1 | tail -2
 strip build-release/tegrarcm-gui 2>/dev/null || true
 
-echo "=== 2/4 Armando estructura ==="
+echo "=== 2/4 staging structure ==="
 rm -rf "$STAGE"
 mkdir -p "$STAGE"/{tools,payloads,udev,assets}
 cp build-release/tegrarcm-gui "$STAGE/"
@@ -29,15 +29,15 @@ cp README.md LICENSE "$STAGE/"
 cp packaging/install.sh "$STAGE/"
 chmod +x "$STAGE/install.sh"
 
-echo "=== 3/4 Empaquetando ==="
+echo "=== 3/4 packaging ==="
 tar -czf "$PKG" -C /tmp "$NAME"
 sha256sum "$PKG" | tee "$STAGE/../${NAME}.sha256" || true
 SHA=$(sha256sum "$PKG" | cut -d' ' -f1)
 echo "SHA256: $SHA"
 du -h "$PKG"
 
-echo "=== 4/4 Contenido ==="
+echo "=== 4/4 contents ==="
 tar -tzf "$PKG"
 echo ""
-echo "PAQUETE: $PKG"
+echo "PACKAGE: $PKG"
 echo "SHA: $SHA"

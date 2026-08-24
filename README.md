@@ -1,181 +1,186 @@
 ![GitHub](https://img.shields.io/github/license/eliboa/TegraRcmGUI)
 
-# TegraRcmGUI-Linux
+# slop-gelee
 
-Port a Linux (Qt6 + libusb) de [TegraRcmGUI](https://github.com/eliboa/TegraRcmGUI), una GUI en C++ para
-cargar *payloads* de recuperación (Fusée Gelée) en una consola Nintendo Switch por USB, en modo RCM
-(Recovery Mode). El original es Windows-only (MFC/Win32 + libusbk); este port reemplaza esa capa por
-Qt6 Widgets y libusb-1.0, conservando el resto de las features.
+a Linux port (Qt6 + libusb) of [TegraRcmGUI](https://github.com/eliboa/TegraRcmGUI), a C++ GUI for
+loading recovery *payloads* (Fusée Gelée) onto a Nintendo Switch over USB in RCM (Recovery Mode).
+the original is Windows-only (MFC/Win32 + libusbk); this port replaces that layer with Qt6 Widgets
+and libusb-1.0, keeping the rest of the features.
 
-> Nota de encuadre: este es un port de plataforma de una herramienta open-source (GPL-2.0) de
-> interoperabilidad de hardware propio (homebrew). El equivalente sería portar un flasher de BIOS o un
-> loader de recovery. Solo funciona en unidades Switch "unpatched" (fabricadas antes de julio de 2018) —
-> comprobalo en https://ismyswitchpatched.com/
+> framing note: this is a platform port of an open-source (GPL-2.0) tool for homebrew interoperability
+> with your own hardware. the equivalent would be porting a BIOS flasher or a recovery loader. it only
+> works on Switch units vulnerable to Fusée Gelée (Erista T210; hardware-unpatched, or firmware-patched
+> which work fine) — check https://ismyswitchpatched.com/
 
-## Dependencias (Arch / CachyOS)
+the name is a joke: built with a paperclip (the jig), willpower, and a suspicious amount of AI slop.
+the code is GPL-2.0 and the trigger is the official one.
+
+## dependencies (arch / cachyos)
 
 ```
-sudo pacman -S qt6-base qt6-svg libusb python-pyusb
+sudo pacman -S qt6-base qt6-svg libusb
 ```
 
-- **qt6-base** — Qt6 Widgets (interfaz)
-- **qt6-svg** — motor SVG de Qt, necesario para el ícono de la app (`assets/tegrarcm.svg`)
-- **libusb** — capa USB de la aplicación (detección de dispositivo en modo RCM)
-- **launcher_rcm** — motor de inyección nativo en C (incluido en el repo y en el release), réplica del
-  motor de NXLoader corregida contra el PoC oficial de ktemkin (recipient ENDPOINT + submit-only URB)
-- **pkexec** (parte de `polkit`, normalmente ya instalado en un entorno de escritorio) — usado por el botón
-  "Instalar reglas udev" de la pestaña Settings, para pedir autenticación gráfica
+- **qt6-base** — Qt6 Widgets (UI)
+- **qt6-svg** — Qt SVG engine, needed for the app icon
+- **libusb** — USB layer (RCM device detection)
+- **launcher_rcm** — native C injection engine (included in the repo and in releases), a replica of the
+  NXLoader engine corrected against ktemkin's official PoC (ENDPOINT recipient + submit-only URB)
+- **pkexec** (part of `polkit`, usually present on a desktop) — used by the "Install udev rules" button
+  in Settings for graphical authentication
 
-CMake, un compilador C++17 y `pkg-config` son necesarios para compilar (`base-devel`, `cmake`).
+CMake, a C++17 compiler and `pkg-config` are needed to build (`base-devel`, `cmake`).
 
-## Compilar
+## build
 
 ```
 cmake -B build && cmake --build build -j$(nproc)
 ```
 
-Esto genera el binario `build/tegrarcm-gui`. Podés correrlo directamente desde ahí — busca
-`tools/launcher_rcm`, `tools/intermezzo.bin` y `udev/50-tegrarcm.rules` como hermanos de la raíz del repo
-(ver sección "Estructura de rutas" abajo), así que **no** hace falta instalar nada para probarlo en el árbol
-de build.
+this produces `build/tegrarcm-gui`. you can run it straight from there — it looks for
+`tools/launcher_rcm`, `tools/intermezzo.bin` and `udev/50-tegrarcm.rules` relative to the repo root
+(see "path layout" below), so no install is needed to try it from the build tree.
 
-## Instalar
+## install
 
-1. Copiar el binario:
+1. copy the binary:
    ```
    mkdir -p ~/.local/bin
    cp build/tegrarcm-gui ~/.local/bin/
    ```
-2. Copiar el motor de inyección **al lado** de `bin/`, no dentro (la app busca `../tools/launcher_rcm`
-   y `../tools/intermezzo.bin` relativo al binario):
+2. copy the injection engine **next to** `bin/`, not inside (the app looks for `../tools/launcher_rcm`
+   and `../tools/intermezzo.bin` relative to the binary):
    ```
    mkdir -p ~/.local/tools
    cp tools/launcher_rcm tools/intermezzo.bin ~/.local/tools/
    ```
-3. (Opcional) copiar las reglas udev con el mismo criterio, para que el botón "Instalar reglas udev" las
-   encuentre sin tener que apuntar al repo:
+3. (optional) copy the udev rules the same way, so the "Install udev rules" button finds them without
+   pointing at the repo:
    ```
    mkdir -p ~/.local/udev
    cp udev/50-tegrarcm.rules ~/.local/udev/
    ```
-4. Crear el lanzador de escritorio:
+4. create a desktop launcher:
    ```
    mkdir -p ~/.local/share/applications
    cat > ~/.local/share/applications/tegrarcm.desktop <<'EOF'
    [Desktop Entry]
    Type=Application
-   Name=TegraRcmGUI
-   Comment=Inyector de payloads RCM para Nintendo Switch
+   Name=slop gelee
+   Comment=RCM payload injector for Nintendo Switch
    Exec=/home/%u/.local/bin/tegrarcm-gui
    Icon=tegrarcm
    Categories=Utility;System;
    Terminal=false
    EOF
    ```
-   Reemplazá `Exec=` por la ruta absoluta real a tu `~/.local/bin/tegrarcm-gui` (los `.desktop` no expanden
-   `~`). El ícono ya está embebido en el binario como recurso Qt (`assets/tegrarcm.svg` vía
-   `assets/resources.qrc`), así que no hace falta instalar un `.svg`/`.png` aparte para que la propia
-   ventana y el ícono de bandeja lo muestren; `Icon=tegrarcm` en el `.desktop` es solo para que el
-   launcher del escritorio (menú de aplicaciones, dock) lo reconozca — si querés que también aparezca ahí,
-   copiá el SVG a `~/.local/share/icons/hicolor/scalable/apps/tegrarcm.svg`.
+   replace `Exec=` with the real absolute path to your `~/.local/bin/tegrarcm-gui` (`.desktop` files do
+   not expand `~`). the icon is embedded in the binary as a Qt resource (`assets/tegrarcm.svg` via
+   `assets/resources.qrc`), so no separate install is needed for the window/tray icon; `Icon=tegrarcm`
+   in the `.desktop` is only for the desktop launcher (app menu, dock) — copy the SVG to
+   `~/.local/share/icons/hicolor/scalable/apps/tegrarcm.svg` if you want it there too.
 
-### Alternativa: `cmake --install`
+   easier: the release tarball ships an `install.sh` that does all of the above (and the desktop entry
+   with icon), optionally installing udev rules with `./install.sh --with-udev`.
 
-El `CMakeLists.txt` incluye un target de instalación simple que respeta el mismo layout relativo
-(`bin/`, `tools/`, `udev/` como hermanos bajo el prefix):
+### alternative: `cmake --install`
+
+the `CMakeLists.txt` has a simple install target that keeps the same relative layout (`bin/`, `tools/`,
+`udev/` as siblings under the prefix):
 
 ```
 cmake --install build --prefix ~/.local
 ```
 
-Esto copia `tegrarcm-gui` a `~/.local/bin/`, `launcher_rcm` + `intermezzo.bin` a `~/.local/tools/`, la regla udev a
-`~/.local/udev/` y este README a `~/.local/share/doc/tegrarcm/`. Con este método el paso 2 y 3 de arriba
-quedan cubiertos automáticamente; solo faltan el `.desktop` (paso 4) y el udev (ver debajo).
+this copies `tegrarcm-gui` to `~/.local/bin/`, `launcher_rcm` + `intermezzo.bin` to `~/.local/tools/`,
+the udev rule to `~/.local/udev/` and this README to `~/.local/share/doc/tegrarcm/`. steps 2 and 3
+above are covered automatically; you still need the `.desktop` (step 4) and the udev activation.
 
-### Estructura de rutas (por qué importa)
+### path layout (why it matters)
 
-El binario busca sus archivos externos en dos ubicaciones relativas a sí mismo, en este orden:
-`../tools/launcher_rcm` (o `../udev/50-tegrarcm.rules`) y luego `./tools/...` (o `./udev/...`). Esto
-funciona tal cual en el árbol de build (`build/tegrarcm-gui` + `tools/` y `udev/` en la raíz del repo) y
-tal cual con el layout `~/.local/{bin,tools,udev}/` de arriba. Si copiás el binario a otro lado sin
-respetar esta estructura, la inyección y la instalación de udev van a fallar con "no encontrado".
+the binary looks for its external files in two locations relative to itself, in this order:
+`../tools/launcher_rcm` (or `../udev/50-tegrarcm.rules`) and then `./tools/...` (or `./udev/...`). this
+works as-is in the build tree (`build/tegrarcm-gui` + `tools/` and `udev/` at the repo root) and with
+the `~/.local/{bin,tools,udev}/` layout above. if you copy the binary somewhere else without keeping
+this structure, injection and udev installation will fail with "not found".
 
-## Reglas udev (por qué no hace falta root)
+## udev rules (why root is not needed)
 
-RCM expone un dispositivo USB "APX" (VID `0955`, PID `7321`) que por defecto solo root puede abrir. La
-regla udev le da permisos `0666` a ese device específico para que un usuario normal pueda inyectar sin
-`sudo` en cada uso — root solo hace falta una vez, al instalar la regla.
+RCM exposes an "APX" USB device (VID `0955`, PID `7321`) that only root can open by default. the udev
+rule gives `0666` permissions to that specific device so a normal user can inject without `sudo` every
+time — root is only needed once, to install the rule.
 
-**Opción A — desde la app:** pestaña *Settings* → "Instalar reglas udev". Pide autenticación gráfica vía
-`pkexec` (o `sudo` si `pkexec` no está disponible) y hace todo el proceso (copiar + recargar + trigger).
+**option A — from the app:** Settings → "Install udev rules". asks for graphical authentication via
+`pkexec` (or `sudo` if `pkexec` is unavailable) and does everything (copy + reload + trigger).
 
-**Opción B — manual:**
+**option B — manual:**
 ```
 sudo cp udev/50-tegrarcm.rules /etc/udev/rules.d/
 sudo udevadm control --reload-rules
 sudo udevadm trigger
 ```
 
-Desconectá y reconectá el cable USB (o volvé a entrar a RCM) después de instalar la regla para que se
-aplique al dispositivo.
+unplug and replug the USB cable (or re-enter RCM) after installing the rule so it applies to the device.
 
-## Uso
+## usage
 
-1. Poné la Switch en modo RCM (unpatched): con la consola apagada, mantené VOL+ y presioná HOME mientras
-   insertás el cable USB / jig de RCM, según tu método habitual.
-2. Abrí la app. La barra de estado muestra "Waiting for device..." hasta que RCM aparece.
-3. Pestaña *Payloads* → "Select payload" → elegí un `.bin` (por ejemplo, algo en `payloads/`).
-4. "Inject". El estado pasa a "Injecting..." y después a éxito o error.
+1. put the Switch in RCM mode (vulnerable unit): with the console off, hold VOL+ and press power while
+   the jig shorts the right joycon pin, per your usual method.
+2. open the app. the status bar shows "Waiting for device..." until RCM appears.
+3. "main" tab → "Select payload..." → pick a `.bin` (e.g. something in `payloads/`).
+4. "Inject". status goes to "Injecting..." and then success or error.
 
-También podés guardar payloads como favoritos (pestaña *Favoritos*, doble click para inyectar) y usar la
-pestaña *Tools* para ShofEL2, memloader o biskeydump.
+you can also save payloads as favorites (double-click in the favorites list on the main tab) and use the
+Tools tab for ShofEL2, biskeydump or Lockpick_RCM — each with its default payload included in releases.
 
-## Payloads
+> tip: RCM mode has a short window (~1 min). connect the console and inject fast, or enable
+> "Auto-inject when device connects" in Settings and just plug it in.
 
-La carpeta `payloads/` del repo es un lugar cómodo para guardar los `.bin` que uses seguido (no está
-versionada por git salvo que la agregues vos a mano). Payloads típicos: [hekate](https://github.com/CTCaer/hekate)
-(bootloader CFW), fusee de [Atmosphère](https://github.com/Atmosphere-NX/Atmosphere), ShofEL2, memloader,
-biskeydump — todos enlazados desde el proyecto original.
+## payloads
 
-La app valida el tamaño del archivo antes de inyectar: tiene que estar entre 4096 bytes (`0x1000`) y 1 MiB.
-Fuera de ese rango, el botón "Inject" falla con un mensaje claro en vez de intentar enviarlo.
+the `payloads/` folder in the repo is a handy place for `.bin` files you use often. typical payloads:
+[hekate](https://github.com/CTCaer/hekate) (CFW bootloader), fusee from
+[Atmosphère](https://github.com/Atmosphere-NX/Atmosphere), ShofEL2, biskeydump, Lockpick_RCM.
 
-## Troubleshooting / FAQ
+the app validates file size before injecting: between 4096 bytes (`0x1000`) and 1 MiB. outside that
+range, "Inject" fails with a clear message instead of trying to send it.
 
-**"Device not detected" / se queda en "Waiting for device..."**
-- Verificá que instalaste la regla udev (sección de arriba) y que reconectaste el cable después.
-- Probá otro cable USB — muchos cables de solo carga no tienen líneas de datos.
-- Confirmá que tu unidad es unpatched (https://ismyswitchpatched.com/): en unidades patcheadas, RCM
-  arranca pero el exploit no corre y el device puede desconectarse solo.
-- `lsusb` debería listar `0955:7321` mientras la consola está en RCM. Si no aparece ahí, es un problema de
-  cable/hardware, no de la app.
+## troubleshooting / faq
 
-**"Injection fails" con el device detectado**
-- Revisá el tamaño del payload (sección de arriba); payloads truncados o corruptos fallan la validación.
-- El motor (`launcher_rcm`) es un binario C que recibe el device path, el payload y el intermezzo como
-  argumentos; el disparo usa el trigger oficial (GET_STATUS con recipient ENDPOINT, URB submit-only), que
-  enviar) — si el error persiste, mirá el log de la pestaña correspondiente o `~/.local/share/tegrarcm/log.txt`
-  para el detalle exacto que devolvió Python/pyusb.
-- Confirmá que `python3` y el módulo `usb` (paquete `python-pyusb`) están instalados y accesibles en el
-  PATH que ve la app.
+**"device not detected" / stuck on "Waiting for device..."**
+- make sure you installed the udev rule (section above) and replugged the cable afterwards.
+- try another USB cable — many charge-only cables have no data lines.
+- confirm your unit is vulnerable (https://ismyswitchpatched.com/): on hardware-patched units RCM
+  boots but the exploit does not run.
+- `lsusb` should list `0955:7321` while the console is in RCM. if it does not, it's a cable/hardware
+  problem, not the app.
 
-**"pkexec hangs" / no aparece el diálogo de autenticación**
-- `pkexec` necesita un agente de polkit corriendo en una sesión gráfica (GNOME, KDE, XFCE con
-  `polkit-gnome`/`polkit-kde-agent` lo traen por defecto). Si corrés la app desde una TTY sin sesión
-  gráfica, o vía SSH sin `DISPLAY`, `pkexec` se queda esperando sin mostrar nada.
-- Solución: corré la app desde tu sesión de escritorio normal, o instalá las reglas manualmente
-  (Opción B de la sección udev) con `sudo` desde una terminal.
+**"injection failed" with the device detected**
+- check the payload size (section above); truncated or corrupt payloads fail validation.
+- the engine (`launcher_rcm`) is a C binary that takes the device path, payload and intermezzo as
+  arguments; the trigger is the official one (GET_STATUS with ENDPOINT recipient, submit-only URB). if
+  the error persists, look at the log in the Tools tab or `~/.local/share/tegrarcm/log.txt` for the
+  exact detail.
+- if a read of the device ID times out, the RCM session was likely already consumed (the ID is answered
+  once per USB session) — re-enter RCM mode and inject without touching the device first.
 
-## Licencia
+**"pkexec hangs" / no auth dialog**
+- `pkexec` needs a polkit agent running in a graphical session (GNOME, KDE, XFCE ship one by default).
+  if you run the app from a TTY without a graphical session, or over SSH without `DISPLAY`, `pkexec`
+  waits forever.
+- fix: run the app from your normal desktop session, or install the rules manually (option B above)
+  with `sudo` from a terminal.
 
-GPL-2.0, igual que el proyecto original ([eliboa/TegraRcmGUI](https://github.com/eliboa/TegraRcmGUI)) y
-[fusee-launcher](https://github.com/Cease-and-DeSwitch/fusee-launcher) de Kate Temkin / fail0verflow, del
-que `tools/fusee-launcher.py` es una copia. Ver [`LICENSE`](LICENSE).
+## license
 
-## Créditos
+GPL-2.0, same as the original project ([eliboa/TegraRcmGUI](https://github.com/eliboa/TegraRcmGUI)) and
+[fusee-launcher](https://github.com/ktemkin/fusee-launcher) by Kate Temkin / fail0verflow, which the
+engine is based on. see [`LICENSE`](LICENSE).
 
-- [eliboa](https://github.com/eliboa) — TegraRcmGUI original (Windows/MFC)
+## credits
+
+- [eliboa](https://github.com/eliboa) — original TegraRcmGUI (Windows/MFC)
 - [Rajkosto](https://github.com/rajkosto) — TegraRcmSmash, memloader, biskeydump
-- [Kate Temkin](https://github.com/ktemkin) / fail0verflow — Fusée Launcher, exploit Fusée Gelée
+- [Kate Temkin](https://github.com/ktemkin) / fail0verflow — Fusée Launcher, Fusée Gelée exploit
 - [CTCaer](https://github.com/CTCaer/hekate) — Hekate
 - [SciresM](https://github.com/SciresM) — Atmosphère
