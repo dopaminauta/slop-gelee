@@ -1,7 +1,7 @@
 # slop-gelee — linux port spec (v2, improved)
 
 **Date:** 23/08/2026
-**spec author:** dopaminauta + camarón (planning/architecture) → implementation: claude code
+**spec author:** dopaminauta + camarón (planning, architecture & implementation)
 **Repo:** ~/Projects/tegrarcm-linux (clone of eliboa/TegraRcmGUI, GPL-2.0)
 **Status:** Windows port (MFC/Win32) → Linux (Qt6/libusb)
 
@@ -282,7 +282,7 @@ The UI (tabs) connects to these signals. The hotplug worker is an internal detai
 (one line — which phase comes next and with what focus)
 ```
 
-## 14. restrictions for Claude Code (executable summary)
+## 14. restrictions for the implementer (executable summary)
 
 - Work ONLY in: src/, CMakeLists.txt, udev/, README.md, assets/
 - Read (never modify): TegraRcmGUI/ (original)
