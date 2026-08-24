@@ -41,7 +41,7 @@ MainWindow::MainWindow(QWidget *parent)
     , m_favorites(new Favorites(this))
     , m_tabs(new QTabWidget(this))
     , m_favoritesTab(nullptr)
-    , m_deviceStatusLabel(new QLabel(tr("Waiting for device..."), this))
+    , m_deviceStatusLabel(new QLabel(tr("waiting for device..."), this))
     , m_payloadPathEdit(nullptr)
     , m_injectButton(nullptr)
     , m_saveAsFavoriteButton(nullptr)
@@ -51,8 +51,8 @@ MainWindow::MainWindow(QWidget *parent)
     resize(640, 480);
 
     m_tabs->addTab(makePayloadTab(), tr("main"));
-    m_tabs->addTab(new ToolsTab(m_injector, m_tabs), tr("Tools"));
-    m_tabs->addTab(new SettingsTab(m_tabs), tr("Settings"));
+    m_tabs->addTab(new ToolsTab(m_injector, m_tabs), tr("tools"));
+    m_tabs->addTab(new SettingsTab(m_tabs), tr("settings"));
     setCentralWidget(m_tabs);
 
     statusBar()->addWidget(m_deviceStatusLabel);
@@ -78,10 +78,10 @@ QWidget *MainWindow::makePayloadTab()
     auto *layout = new QVBoxLayout(widget);
 
     auto *selectRow = new QHBoxLayout;
-    auto *selectButton = new QPushButton(tr("Select payload..."), widget);
+    auto *selectButton = new QPushButton(tr("select payload..."), widget);
     m_payloadPathEdit = new QLineEdit(widget);
     m_payloadPathEdit->setReadOnly(true);
-    m_payloadPathEdit->setPlaceholderText(tr("No payload selected"));
+    m_payloadPathEdit->setPlaceholderText(tr("no payload selected"));
     // Pre-cargar el payload por defecto (release instalado o primer favorito)
     const QString defPayload = defaultPayloadPath();
     if (!defPayload.isEmpty()) {
@@ -90,10 +90,10 @@ QWidget *MainWindow::makePayloadTab()
     selectRow->addWidget(selectButton);
     selectRow->addWidget(m_payloadPathEdit, 1);
 
-    m_injectButton = new QPushButton(tr("Inject"), widget);
+    m_injectButton = new QPushButton(tr("inject"), widget);
     m_injectButton->setEnabled(false);
 
-    m_saveAsFavoriteButton = new QPushButton(tr("Save as favorite"), widget);
+    m_saveAsFavoriteButton = new QPushButton(tr("save as favorite"), widget);
     m_saveAsFavoriteButton->setEnabled(false);
 
     layout->addLayout(selectRow);
@@ -101,7 +101,7 @@ QWidget *MainWindow::makePayloadTab()
     layout->addWidget(m_saveAsFavoriteButton);
 
     // Favorites integrated into the main tab (double-click to inject).
-    auto *favLabel = new QLabel(tr("Favorites (double-click to inject):"), widget);
+    auto *favLabel = new QLabel(tr("favorites (double-click to inject):"), widget);
     m_favoritesTab = new FavoritesTab(m_favorites, widget);
     layout->addWidget(favLabel);
     layout->addWidget(m_favoritesTab, 1);  // stretch 1: ocupa el espacio vertical libre
@@ -122,7 +122,7 @@ void MainWindow::setupTrayIcon()
     m_trayIcon->setToolTip(tr("slop gelee — Fusee Gelee payload injector"));
 
     auto *menu = new QMenu(this);
-    QAction *showHideAction = menu->addAction(tr("Show/Hide"));
+    QAction *showHideAction = menu->addAction(tr("show/hide"));
     connect(showHideAction, &QAction::triggered, this, [this]() {
         setVisible(!isVisible());
         if (isVisible()) {
@@ -132,7 +132,7 @@ void MainWindow::setupTrayIcon()
     });
 
     menu->addSeparator();
-    QAction *quitAction = menu->addAction(tr("Quit"));
+    QAction *quitAction = menu->addAction(tr("quit"));
     connect(quitAction, &QAction::triggered, qApp, &QApplication::quit);
 
     m_trayIcon->setContextMenu(menu);
@@ -167,7 +167,7 @@ void MainWindow::onTrayActivated(QSystemTrayIcon::ActivationReason reason)
 void MainWindow::onSelectPayload()
 {
     const QString path = QFileDialog::getOpenFileName(
-        this, tr("Select payload"), QString(), tr("Bin files (*.bin);;All files (*)"));
+        this, tr("select payload"), QString(), tr("bin files (*.bin);;All files (*)"));
     if (path.isEmpty()) {
         return;
     }
@@ -195,7 +195,7 @@ void MainWindow::injectPath(const QString &path)
         return;
     }
     m_injectButton->setEnabled(false);
-    m_deviceStatusLabel->setText(tr("Injecting..."));
+    m_deviceStatusLabel->setText(tr("injecting..."));
     m_injector->injectPayload(path);
 }
 
@@ -228,7 +228,7 @@ void MainWindow::updateInjectEnabled()
 
 void MainWindow::onDeviceConnected()
 {
-    m_deviceStatusLabel->setText(tr("Device found (RCM)"));
+    m_deviceStatusLabel->setText(tr("device found (RCM)"));
     updateInjectEnabled();
 
     // Auto-injection: OPTIONAL, default OFF (user product decision).
@@ -242,7 +242,7 @@ void MainWindow::onDeviceConnected()
 
 void MainWindow::onDeviceDisconnected()
 {
-    m_deviceStatusLabel->setText(tr("Waiting for device..."));
+    m_deviceStatusLabel->setText(tr("waiting for device..."));
     updateInjectEnabled();
 }
 
@@ -250,16 +250,16 @@ void MainWindow::onPayloadInjected(const QString &path, int bytesSent)
 {
     Q_UNUSED(bytesSent)
     Q_UNUSED(path)
-    m_deviceStatusLabel->setText(tr("Payload injected"));
+    m_deviceStatusLabel->setText(tr("payload injected"));
     updateInjectEnabled();
 }
 
 void MainWindow::onInjectionFailed(const QString &errorMessage)
 {
-    m_deviceStatusLabel->setText(tr("Injection failed"));
+    m_deviceStatusLabel->setText(tr("injection failed"));
     statusBar()->showMessage(errorMessage, 8000);
     // Persist errors too (non-zero exits from the engine do not go through onLogMessage)
-    onLogMessage(QStringLiteral("ERROR: %1").arg(errorMessage));
+    onLogMessage(QStringLiteral("eRROR: %1").arg(errorMessage));
     updateInjectEnabled();
 }
 

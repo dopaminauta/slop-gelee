@@ -36,13 +36,13 @@ UdevRules::UdevRules(QObject *parent) : QObject(parent)
 void UdevRules::install()
 {
     if (m_process != nullptr) {
-        emit logMessage(tr("Ya hay una instalacion en curso."));
+        emit logMessage(tr("installation already in progress."));
         return;
     }
 
     const QString source = rulesSourcePath();
     if (!QFileInfo::exists(source)) {
-        emit logMessage(tr("No se encontro udev/50-tegrarcm.rules en: %1").arg(source));
+        emit logMessage(tr("udev/50-tegrarcm.rules not found in: %1").arg(source));
         emit finished(false);
         return;
     }
@@ -53,7 +53,7 @@ void UdevRules::install()
         "cp '%1' /etc/udev/rules.d/50-tegrarcm.rules && "
         "udevadm control --reload-rules && udevadm trigger").arg(source);
 
-    emit logMessage(tr("Installing udev rules (authentication required)..."));
+    emit logMessage(tr("installing udev rules (authentication required)..."));
 
     m_process = new QProcess(this);
     connect(m_process, &QProcess::finished, this, &UdevRules::onProcessFinished);
@@ -84,9 +84,9 @@ void UdevRules::onProcessFinished(int exitCode, QProcess::ExitStatus exitStatus)
     } else {
         QString detail = error.trimmed().isEmpty() ? output.trimmed() : error.trimmed();
         if (detail.isEmpty()) {
-            detail = tr("sin detalle (pkexec/sudo cancelado o denegado)");
+            detail = tr("no detail (pkexec/sudo cancelled or denied)");
         }
-        emit logMessage(tr("Instalacion cancelada o fallida (exit %1): %2")
+        emit logMessage(tr("installation cancelled or failed (exit %1): %2")
                              .arg(exitCode)
                              .arg(detail));
     }
@@ -101,7 +101,7 @@ void UdevRules::onProcessError(QProcess::ProcessError error)
     if (m_process == nullptr) {
         return;
     }
-    emit logMessage(tr("Process error (%1): %2")
+    emit logMessage(tr("process error (%1): %2")
                          .arg(static_cast<int>(error))
                          .arg(m_process->errorString()));
     emit finished(false);

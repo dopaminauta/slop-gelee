@@ -61,7 +61,7 @@ ToolsTab::ToolsTab(Injector *injector, QWidget *parent)
     , m_log(new QPlainTextEdit(this))
 {
     m_shofel2.settingsKey = QString::fromLatin1(kShofel2PathKey);
-    m_shofel2.displayName = tr("Linux (ShofEL2)");
+    m_shofel2.displayName = tr("linux (ShofEL2)");
     m_shofel2.defaultPayload = QString::fromLatin1(kShofel2DefaultPayload);
     m_biskeydump.settingsKey = QString::fromLatin1(kBiskeydumpPathKey);
     m_biskeydump.displayName = tr("biskeydump (BIS keys)");
@@ -71,15 +71,15 @@ ToolsTab::ToolsTab(Injector *injector, QWidget *parent)
     m_lockpick.defaultPayload = QString::fromLatin1(kLockpickDefaultPayload);
 
     auto *layout = new QVBoxLayout(this);
-    layout->addWidget(makeToolGroup(m_shofel2, tr("Run Linux"), tr("Run Linux (ShofEL2)")));
+    layout->addWidget(makeToolGroup(m_shofel2, tr("run linux"), tr("run linux (ShofEL2)")));
     layout->addWidget(makeToolGroup(
-        m_biskeydump, tr("Dump BIS keys"), tr("Dump BIS keys")));
+        m_biskeydump, tr("dump BIS keys"), tr("dump BIS keys")));
     layout->addWidget(makeToolGroup(
-        m_lockpick, tr("Dump keys (Lockpick_RCM)"), tr("Dump keys (Lockpick_RCM)")));
+        m_lockpick, tr("dump keys (Lockpick_RCM)"), tr("dump keys (Lockpick_RCM)")));
 
     m_log->setReadOnly(true);
     m_log->setMaximumBlockCount(2000);
-    layout->addWidget(new QLabel(tr("Log:"), this));
+    layout->addWidget(new QLabel(tr("log:"), this));
     layout->addWidget(m_log, 1);
 
     connect(m_injector, &Injector::logMessage, this, &ToolsTab::onLogMessage);
@@ -93,9 +93,9 @@ QWidget *ToolsTab::makeToolGroup(Tool &tool, const QString &groupTitle, const QS
     auto *groupLayout = new QVBoxLayout(group);
 
     auto *pathRow = new QHBoxLayout;
-    tool.pathLabel = new QLabel(tr("No payload selected"), group);
+    tool.pathLabel = new QLabel(tr("no payload selected"), group);
     tool.pathLabel->setWordWrap(true);
-    auto *changeButton = new QPushButton(tr("Change payload..."), group);
+    auto *changeButton = new QPushButton(tr("change payload..."), group);
     pathRow->addWidget(tool.pathLabel, 1);
     pathRow->addWidget(changeButton);
 
@@ -121,7 +121,7 @@ QWidget *ToolsTab::makeToolGroup(Tool &tool, const QString &groupTitle, const QS
 
     connect(changeButton, &QPushButton::clicked, this, [this, &tool]() {
         const QString path = QFileDialog::getOpenFileName(
-            this, tr("Select payload"), QString(), tr("Bin files (*.bin);;All files (*)"));
+            this, tr("select payload"), QString(), tr("bin files (*.bin);;All files (*)"));
         if (path.isEmpty()) {
             return;
         }
@@ -150,8 +150,8 @@ void ToolsTab::runTool(Tool &tool)
     }
     if (path.isEmpty() || !QFileInfo::exists(path)) {
         path = QFileDialog::getOpenFileName(
-            this, tr("Select payload for %1").arg(tool.displayName), QString(),
-            tr("Bin files (*.bin);;All files (*)"));
+            this, tr("select payload for %1").arg(tool.displayName), QString(),
+            tr("bin files (*.bin);;All files (*)"));
         if (path.isEmpty()) {
             return;
         }
@@ -174,7 +174,7 @@ void ToolsTab::setButtonsEnabled(bool enabled)
 
 void ToolsTab::appendLog(const QString &message)
 {
-    const QString timestamp = QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss"));
+    const QString timestamp = QDateTime::currentDateTime().toString(QStringLiteral("hH:mm:ss"));
     m_log->appendPlainText(QStringLiteral("[%1] %2").arg(timestamp, message));
 }
 
@@ -186,12 +186,12 @@ void ToolsTab::onLogMessage(const QString &message)
 void ToolsTab::onPayloadInjected(const QString &path, int bytesSent)
 {
     Q_UNUSED(bytesSent)
-    appendLog(tr("Payload injected: %1").arg(path));
+    appendLog(tr("payload injected: %1").arg(path));
     setButtonsEnabled(true);
 }
 
 void ToolsTab::onInjectionFailed(const QString &errorMessage)
 {
-    appendLog(tr("Error: %1").arg(errorMessage));
+    appendLog(tr("error: %1").arg(errorMessage));
     setButtonsEnabled(true);
 }

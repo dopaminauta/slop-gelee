@@ -102,7 +102,7 @@ protected:
                 callbackRegistered = true;
             } else {
                 emit m_owner->logMessage(
-                    QStringLiteral("No se pudo registrar hotplug callback: %1")
+                    QStringLiteral("no se pudo registrar hotplug callback: %1")
                         .arg(libusb_error_name(rc)));
             }
         } else {
@@ -230,19 +230,19 @@ void Injector::stopMonitoring()
 void Injector::injectPayload(const QString &payloadPath)
 {
     if (m_process != nullptr) {
-        emit injectionFailed(QStringLiteral("Injection already in progress."));
+        emit injectionFailed(QStringLiteral("injection already in progress."));
         return;
     }
 
     const QFileInfo fileInfo(payloadPath);
     if (!fileInfo.exists() || !fileInfo.isFile()) {
-        emit injectionFailed(QStringLiteral("El archivo no existe: %1").arg(payloadPath));
+        emit injectionFailed(QStringLiteral("el archivo no existe: %1").arg(payloadPath));
         return;
     }
     const qint64 size = fileInfo.size();
     if (size < 0x1000 || size > 1024 * 1024) {
         emit injectionFailed(
-            QStringLiteral("Tamano de payload invalido (%1 bytes; se espera 4096..1048576).")
+            QStringLiteral("tamano de payload invalido (%1 bytes; se espera 4096..1048576).")
                 .arg(size));
         return;
     }
@@ -252,7 +252,7 @@ void Injector::injectPayload(const QString &payloadPath)
     const QFileInfo launcherInfo(launcherPath);
     if (!launcherInfo.exists()) {
         emit injectionFailed(
-            QStringLiteral("Injection engine not found: %1").arg(launcherPath));
+            QStringLiteral("injection engine not found: %1").arg(launcherPath));
         return;
     }
 
@@ -262,7 +262,7 @@ void Injector::injectPayload(const QString &payloadPath)
             .absoluteFilePath();
     if (!QFileInfo(relocatorPath).exists()) {
         emit injectionFailed(
-            QStringLiteral("Intermezzo not found next to the engine: %1").arg(relocatorPath));
+            QStringLiteral("intermezzo not found next to the engine: %1").arg(relocatorPath));
         return;
     }
 
@@ -299,7 +299,7 @@ void Injector::injectPayload(const QString &payloadPath)
         return;
     }
 
-    emit logMessage(QStringLiteral("Injecting payload: %1").arg(payloadPath));
+    emit logMessage(QStringLiteral("injecting payload: %1").arg(payloadPath));
 
     // El hotplug de libusb se dispara antes de que udev cree el node del device;
     // esperar un instante para que /dev/bus/usb/BBB/DDD exista (el RCM se agota
@@ -343,7 +343,7 @@ void Injector::onProcessFinished(int exitCode, QProcess::ExitStatus exitStatus)
                                detail.contains(QStringLiteral("no se pudo abrir"));
         if (retriable && m_injectRetries < 3 && isDeviceConnected()) {
             ++m_injectRetries;
-            emit logMessage(QStringLiteral("Retrying (%1/3)...").arg(m_injectRetries));
+            emit logMessage(QStringLiteral("retrying (%1/3)...").arg(m_injectRetries));
             m_process->deleteLater();
             m_process = nullptr;
             QTimer::singleShot(600, this, [this]() {
@@ -353,7 +353,7 @@ void Injector::onProcessFinished(int exitCode, QProcess::ExitStatus exitStatus)
         }
 
         emit injectionFailed(
-            QStringLiteral("Error al inyectar (exit %1): %2").arg(exitCode).arg(detail));
+            QStringLiteral("error al inyectar (exit %1): %2").arg(exitCode).arg(detail));
     }
 
     m_process->deleteLater();
@@ -365,7 +365,7 @@ void Injector::onProcessError(QProcess::ProcessError error)
     if (m_process == nullptr) {
         return;
     }
-    emit injectionFailed(QStringLiteral("Error de proceso (%1): %2")
+    emit injectionFailed(QStringLiteral("error de proceso (%1): %2")
                              .arg(static_cast<int>(error))
                              .arg(m_process->errorString()));
     m_process->deleteLater();

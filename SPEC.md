@@ -1,7 +1,7 @@
 # slop-gelee — linux port spec (v2, improved)
 
 **Date:** 23/08/2026
-**Spec author:** Camarón (planning/architecture) → implementation: Claude Code
+**spec author:** dopaminauta + camarón (planning/architecture) → implementation: claude code
 **Repo:** ~/Projects/tegrarcm-linux (clone of eliboa/TegraRcmGUI, GPL-2.0)
 **Status:** Windows port (MFC/Win32) → Linux (Qt6/libusb)
 

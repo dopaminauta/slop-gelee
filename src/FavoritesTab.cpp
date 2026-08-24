@@ -52,8 +52,8 @@ void FavoritesTab::onContextMenuRequested(const QPoint &pos)
     }
 
     QMenu menu(this);
-    QAction *sendAction = menu.addAction(tr("Send"));
-    QAction *removeAction = menu.addAction(tr("Remove"));
+    QAction *sendAction = menu.addAction(tr("send"));
+    QAction *removeAction = menu.addAction(tr("remove"));
 
     QAction *chosen = menu.exec(m_list->mapToGlobal(pos));
     if (chosen == sendAction) {

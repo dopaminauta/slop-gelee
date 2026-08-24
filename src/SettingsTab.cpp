@@ -27,9 +27,9 @@
 
 SettingsTab::SettingsTab(QWidget *parent)
     : QWidget(parent)
-    , m_autoInjectCheck(new QCheckBox(tr("Auto-inject when device connects"), this))
-    , m_minimizeToTrayCheck(new QCheckBox(tr("Minimize to system tray"), this))
-    , m_runAtStartupCheck(new QCheckBox(tr("Start automatically with the system"), this))
+    , m_autoInjectCheck(new QCheckBox(tr("auto-inject when device connects"), this))
+    , m_minimizeToTrayCheck(new QCheckBox(tr("minimize to system tray"), this))
+    , m_runAtStartupCheck(new QCheckBox(tr("start automatically with the system"), this))
     , m_log(new QPlainTextEdit(this))
     , m_udevRules(new UdevRules(this))
 {
@@ -38,15 +38,15 @@ SettingsTab::SettingsTab(QWidget *parent)
     layout->addWidget(m_minimizeToTrayCheck);
     layout->addWidget(m_runAtStartupCheck);
 
-    auto *openFolderButton = new QPushButton(tr("Open payloads folder"), this);
+    auto *openFolderButton = new QPushButton(tr("open payloads folder"), this);
     layout->addWidget(openFolderButton);
 
-    auto *installUdevButton = new QPushButton(tr("Install udev rules"), this);
+    auto *installUdevButton = new QPushButton(tr("install udev rules"), this);
     layout->addWidget(installUdevButton);
 
     m_log->setReadOnly(true);
     m_log->setMaximumBlockCount(2000);
-    layout->addWidget(new QLabel(tr("Log:"), this));
+    layout->addWidget(new QLabel(tr("log:"), this));
     layout->addWidget(m_log, 1);
 
     QSettings settings;
@@ -99,7 +99,7 @@ void SettingsTab::onInstallUdevRules()
 
 void SettingsTab::onUdevLogMessage(const QString &message)
 {
-    const QString timestamp = QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss"));
+    const QString timestamp = QDateTime::currentDateTime().toString(QStringLiteral("hH:mm:ss"));
     m_log->appendPlainText(QStringLiteral("[%1] %2").arg(timestamp, message));
 }
 
