@@ -80,6 +80,11 @@ QWidget *MainWindow::makePayloadTab()
     m_payloadPathEdit = new QLineEdit(widget);
     m_payloadPathEdit->setReadOnly(true);
     m_payloadPathEdit->setPlaceholderText(tr("No payload selected"));
+    // Pre-cargar el payload por defecto (release instalado o primer favorito)
+    const QString defPayload = defaultPayloadPath();
+    if (!defPayload.isEmpty()) {
+        m_payloadPathEdit->setText(defPayload);
+    }
     selectRow->addWidget(selectButton);
     selectRow->addWidget(m_payloadPathEdit, 1);
 
@@ -185,6 +190,26 @@ void MainWindow::injectPath(const QString &path)
     m_injector->injectPayload(path);
 }
 
+QString MainWindow::defaultPayloadPath() const
+{
+    // 1) El payload que el usuario selecciono
+    if (!m_payloadPathEdit->text().isEmpty()) {
+        return m_payloadPathEdit->text();
+    }
+    // 2) El payload del release instalado (install.sh lo deja aca)
+    const QDir payloadDir(QDir::homePath() + QStringLiteral("/.local/share/tegrarcm/payloads"));
+    const QStringList bins =
+        payloadDir.entryList({QStringLiteral("*.bin")}, QDir::Files, QDir::Name);
+    if (!bins.isEmpty()) {
+        return payloadDir.filePath(bins.first());
+    }
+    // 3) Primer favorito
+    if (m_favorites != nullptr && !m_favorites->paths().isEmpty()) {
+        return m_favorites->paths().first();
+    }
+    return {};
+}
+
 void MainWindow::updateInjectEnabled()
 {
     const bool hasPath = !m_payloadPathEdit->text().isEmpty();
@@ -197,10 +222,12 @@ void MainWindow::onDeviceConnected()
     m_deviceStatusLabel->setText(tr("Device found (RCM)"));
     updateInjectEnabled();
 
+    // Auto-inyeccion: OPCIONAL, default OFF (decision de producto del usuario).
     QSettings settings;
     const bool autoInject = settings.value(SettingsTab::kAutoInjectKey, false).toBool();
-    if (autoInject && !m_payloadPathEdit->text().isEmpty()) {
-        injectPath(m_payloadPathEdit->text());
+    const QString path = defaultPayloadPath();
+    if (autoInject && !path.isEmpty()) {
+        injectPath(path);
     }
 }
 

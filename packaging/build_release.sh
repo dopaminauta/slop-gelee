@@ -4,7 +4,7 @@ set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 ROOT="$(pwd)"
-VERSION="1.0.0"
+VERSION="1.1.0"
 NAME="slop-gelee-v${VERSION}-linux-x86_64"
 STAGE="/tmp/${NAME}"
 PKG="/tmp/${NAME}.tar.gz"

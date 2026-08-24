@@ -45,6 +45,7 @@ private slots:
 private:
     QWidget *makePayloadTab();
     void injectPath(const QString &path);
+    QString defaultPayloadPath() const;
     void updateInjectEnabled();
     void setupTrayIcon();
 
