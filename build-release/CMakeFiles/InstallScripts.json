@@ -1,7 +1,0 @@
-{
-	"InstallScripts" : 
-	[
-		"/home/axel/Projects/tegrarcm-linux/build-release/cmake_install.cmake"
-	],
-	"Parallel" : false
-}
