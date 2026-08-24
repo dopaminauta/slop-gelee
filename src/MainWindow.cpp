@@ -50,10 +50,7 @@ MainWindow::MainWindow(QWidget *parent)
     setWindowTitle(tr("slop gelee"));
     resize(640, 480);
 
-    m_favoritesTab = new FavoritesTab(m_favorites, m_tabs);
-
     m_tabs->addTab(makePayloadTab(), tr("main"));
-    m_tabs->addTab(m_favoritesTab, tr("Favoritos"));
     m_tabs->addTab(new ToolsTab(m_injector, m_tabs), tr("Herramientas"));
     m_tabs->addTab(new SettingsTab(m_tabs), tr("Configuracion"));
     setCentralWidget(m_tabs);
@@ -102,6 +99,12 @@ QWidget *MainWindow::makePayloadTab()
     layout->addLayout(selectRow);
     layout->addWidget(m_injectButton);
     layout->addWidget(m_saveAsFavoriteButton);
+
+    // Favoritos integrados en la pestana main (doble clic para inyectar).
+    auto *favLabel = new QLabel(tr("Favoritos (doble clic para inyectar):"), widget);
+    m_favoritesTab = new FavoritesTab(m_favorites, widget);
+    layout->addWidget(favLabel);
+    layout->addWidget(m_favoritesTab);
 
     // Registro/log central (antes vivia en la pestana de herramientas).
     auto *logLabel = new QLabel(tr("Registro:"), widget);
