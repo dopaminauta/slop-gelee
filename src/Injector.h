@@ -61,4 +61,11 @@ private:
     Worker *m_worker = nullptr;
     QProcess *m_process = nullptr;
     std::atomic<bool> m_deviceConnected{false};
+
+    // Reintentos de inyeccion: el device recien conectado puede no estar listo
+    // cuando el hotplug lo detecta (el script ganador esperaba enumeracion completa).
+    int m_injectRetries = 0;
+    QString m_retryDevicePath;
+    QString m_retryPayloadPath;
+    QString m_retryRelocatorPath;
 };

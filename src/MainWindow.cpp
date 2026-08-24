@@ -16,7 +16,11 @@
 #include <QAction>
 #include <QApplication>
 #include <QCloseEvent>
+#include <QDateTime>
 #include <QDebug>
+#include <QDir>
+#include <QFile>
+#include <QTextStream>
 #include <QFileDialog>
 #include <QHBoxLayout>
 #include <QIcon>
@@ -249,10 +253,21 @@ void MainWindow::onInjectionFailed(const QString &errorMessage)
 {
     m_deviceStatusLabel->setText(tr("Injection failed"));
     statusBar()->showMessage(errorMessage, 8000);
+    // Persistir errores tambien (los exit != 0 del motor no pasan por onLogMessage)
+    onLogMessage(QStringLiteral("ERROR: %1").arg(errorMessage));
     updateInjectEnabled();
 }
 
 void MainWindow::onLogMessage(const QString &message)
 {
     qDebug() << message;
+    // Log persistente para diagnostico (reversible; ayuda a ver el output del
+    // motor de inyeccion sin depender de la ventana).
+    QDir logDir(QDir::homePath() + QStringLiteral("/.local/share/tegrarcm"));
+    logDir.mkpath(QStringLiteral("."));
+    QFile logFile(logDir.filePath(QStringLiteral("log.txt")));
+    if (logFile.open(QIODevice::Append | QIODevice::Text)) {
+        QTextStream out(&logFile);
+        out << QDateTime::currentDateTime().toString(Qt::ISODate) << " " << message << Qt::endl;
+    }
 }

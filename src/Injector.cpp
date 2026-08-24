@@ -21,6 +21,7 @@
 #include <QFileInfo>
 #include <QProcess>
 #include <QThread>
+#include <QTimer>
 
 #include <libusb-1.0/libusb.h>
 
@@ -115,6 +116,21 @@ protected:
             timeout.tv_sec = 0;
             timeout.tv_usec = 100000; // 100ms, per SPEC gotcha #2
             libusb_handle_events_timeout_completed(m_ctx, &timeout, nullptr);
+
+            // Polling defensivo de la lista (cada ~1s): el hotplug de libusb se
+            // pierde los devices re-enumerados por el kernel (unbind/reset) y los
+            // devices conectados antes de abrir la app. El script ganador usaba
+            // polling de lsusb — esto replica eso dentro de la GUI.
+            if (++m_tick % 10 == 0) {
+                const bool present = scanForRcmDevice();
+                if (present != m_owner->isDeviceConnected()) {
+                    if (present) {
+                        m_owner->handleDeviceArrived();
+                    } else {
+                        m_owner->handleDeviceLeft();
+                    }
+                }
+            }
         }
 
         if (callbackRegistered) {
@@ -123,6 +139,28 @@ protected:
     }
 
 private:
+    // Escaneo de la lista actual de devices en busca del Tegra en RCM.
+    // Devuelve true si hay AL MENOS uno presente.
+    bool scanForRcmDevice()
+    {
+        libusb_device **devs = nullptr;
+        const ssize_t cnt = libusb_get_device_list(m_ctx, &devs);
+        bool found = false;
+        for (ssize_t i = 0; i < cnt && !found; ++i) {
+            libusb_device_descriptor desc;
+            if (libusb_get_device_descriptor(devs[i], &desc) == LIBUSB_SUCCESS &&
+                desc.idVendor == Injector::kRcmVendorId &&
+                desc.idProduct == Injector::kRcmProductId) {
+                found = true;
+            }
+        }
+        if (devs != nullptr) {
+            libusb_free_device_list(devs, 1);
+        }
+        return found;
+    }
+
+    int m_tick = 0;
     static int LIBUSB_CALL hotplugCallback(libusb_context *ctx, libusb_device *device,
                                             libusb_hotplug_event event, void *userData)
     {
@@ -229,17 +267,27 @@ void Injector::injectPayload(const QString &payloadPath)
     }
 
     // Resolver el device path (/dev/bus/usb/BBB/DDD) del Tegra en RCM via libusb.
+    // IMPORTANTE: elegir el device de direccion MAS ALTA (el mas nuevo). Los
+    // devices quemados quedan enumerados y el primero de la lista puede ser uno
+    // muerto — el RCM recien conectado siempre tiene el numero mas alto.
     QString devicePath;
+    int bestBus = -1;
+    int bestAddr = -1;
     libusb_device **devs = nullptr;
     const ssize_t cnt = libusb_get_device_list(m_ctx, &devs);
     for (ssize_t i = 0; i < cnt; ++i) {
         libusb_device_descriptor desc;
         if (libusb_get_device_descriptor(devs[i], &desc) == LIBUSB_SUCCESS &&
             desc.idVendor == kRcmVendorId && desc.idProduct == kRcmProductId) {
-            devicePath = QStringLiteral("/dev/bus/usb/%1/%2")
-                             .arg(libusb_get_bus_number(devs[i]), 3, 10, QLatin1Char('0'))
-                             .arg(libusb_get_device_address(devs[i]), 3, 10, QLatin1Char('0'));
-            break;
+            const int bus = libusb_get_bus_number(devs[i]);
+            const int addr = libusb_get_device_address(devs[i]);
+            if (addr > bestAddr || (addr == bestAddr && bus > bestBus)) {
+                bestBus = bus;
+                bestAddr = addr;
+                devicePath = QStringLiteral("/dev/bus/usb/%1/%2")
+                                 .arg(bus, 3, 10, QLatin1Char('0'))
+                                 .arg(addr, 3, 10, QLatin1Char('0'));
+            }
         }
     }
     if (devs != nullptr) {
@@ -252,6 +300,16 @@ void Injector::injectPayload(const QString &payloadPath)
     }
 
     emit logMessage(QStringLiteral("Inyectando payload: %1").arg(payloadPath));
+
+    // El hotplug de libusb se dispara antes de que udev cree el node del device;
+    // esperar un instante para que /dev/bus/usb/BBB/DDD exista (el RCM se agota
+    // en ~60s, 400ms no comprometen la ventana).
+    QThread::msleep(400);
+
+    m_retryDevicePath = devicePath;
+    m_retryPayloadPath = payloadPath;
+    m_retryRelocatorPath = relocatorPath;
+    m_injectRetries = 0;
 
     m_process = new QProcess(this);
     connect(m_process, &QProcess::finished, this, &Injector::onProcessFinished);
@@ -278,6 +336,22 @@ void Injector::onProcessFinished(int exitCode, QProcess::ExitStatus exitStatus)
         emit payloadInjected(m_process->program(), 0 /* bytes; fusee-launcher no los reporta */);
     } else {
         const QString detail = error.trimmed().isEmpty() ? output.trimmed() : error.trimmed();
+
+        // Reintento automatico si el device no estaba listo (read timeout) y
+        // el device sigue presente — el RCM fresco a veces tarda en responder.
+        const bool retriable = detail.contains(QStringLiteral("fallo al leer device ID")) ||
+                               detail.contains(QStringLiteral("no se pudo abrir"));
+        if (retriable && m_injectRetries < 3 && isDeviceConnected()) {
+            ++m_injectRetries;
+            emit logMessage(QStringLiteral("Reintentando (%1/3)...").arg(m_injectRetries));
+            m_process->deleteLater();
+            m_process = nullptr;
+            QTimer::singleShot(600, this, [this]() {
+                injectPayload(m_retryPayloadPath);
+            });
+            return;
+        }
+
         emit injectionFailed(
             QStringLiteral("Error al inyectar (exit %1): %2").arg(exitCode).arg(detail));
     }
