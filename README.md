@@ -21,8 +21,8 @@ sudo pacman -S qt6-base qt6-svg libusb python-pyusb
 - **qt6-base** — Qt6 Widgets (interfaz)
 - **qt6-svg** — motor SVG de Qt, necesario para el ícono de la app (`assets/tegrarcm.svg`)
 - **libusb** — capa USB de la aplicación (detección de dispositivo en modo RCM)
-- **python-pyusb** (paquete Python `usb`) — usado por `tools/fusee-launcher.py`, el motor externo que hace
-  la inyección real del payload
+- **launcher_rcm** — motor de inyección nativo en C (incluido en el repo y en el release), réplica del
+  motor de NXLoader corregida contra el PoC oficial de ktemkin (recipient ENDPOINT + submit-only URB)
 - **pkexec** (parte de `polkit`, normalmente ya instalado en un entorno de escritorio) — usado por el botón
   "Instalar reglas udev" de la pestaña Settings, para pedir autenticación gráfica
 
@@ -35,7 +35,7 @@ cmake -B build && cmake --build build -j$(nproc)
 ```
 
 Esto genera el binario `build/tegrarcm-gui`. Podés correrlo directamente desde ahí — busca
-`tools/fusee-launcher.py` y `udev/50-tegrarcm.rules` como hermanos de la raíz del repo
+`tools/launcher_rcm`, `tools/intermezzo.bin` y `udev/50-tegrarcm.rules` como hermanos de la raíz del repo
 (ver sección "Estructura de rutas" abajo), así que **no** hace falta instalar nada para probarlo en el árbol
 de build.
 
@@ -46,11 +46,11 @@ de build.
    mkdir -p ~/.local/bin
    cp build/tegrarcm-gui ~/.local/bin/
    ```
-2. Copiar el motor de inyección **al lado** de `bin/`, no dentro (la app busca `../tools/fusee-launcher.py`
-   relativo al binario):
+2. Copiar el motor de inyección **al lado** de `bin/`, no dentro (la app busca `../tools/launcher_rcm`
+   y `../tools/intermezzo.bin` relativo al binario):
    ```
    mkdir -p ~/.local/tools
-   cp tools/fusee-launcher.py ~/.local/tools/
+   cp tools/launcher_rcm tools/intermezzo.bin ~/.local/tools/
    ```
 3. (Opcional) copiar las reglas udev con el mismo criterio, para que el botón "Instalar reglas udev" las
    encuentre sin tener que apuntar al repo:
@@ -88,14 +88,14 @@ El `CMakeLists.txt` incluye un target de instalación simple que respeta el mism
 cmake --install build --prefix ~/.local
 ```
 
-Esto copia `tegrarcm-gui` a `~/.local/bin/`, `fusee-launcher.py` a `~/.local/tools/`, la regla udev a
+Esto copia `tegrarcm-gui` a `~/.local/bin/`, `launcher_rcm` + `intermezzo.bin` a `~/.local/tools/`, la regla udev a
 `~/.local/udev/` y este README a `~/.local/share/doc/tegrarcm/`. Con este método el paso 2 y 3 de arriba
 quedan cubiertos automáticamente; solo faltan el `.desktop` (paso 4) y el udev (ver debajo).
 
 ### Estructura de rutas (por qué importa)
 
 El binario busca sus archivos externos en dos ubicaciones relativas a sí mismo, en este orden:
-`../tools/fusee-launcher.py` (o `../udev/50-tegrarcm.rules`) y luego `./tools/...` (o `./udev/...`). Esto
+`../tools/launcher_rcm` (o `../udev/50-tegrarcm.rules`) y luego `./tools/...` (o `./udev/...`). Esto
 funciona tal cual en el árbol de build (`build/tegrarcm-gui` + `tools/` y `udev/` en la raíz del repo) y
 tal cual con el layout `~/.local/{bin,tools,udev}/` de arriba. Si copiás el binario a otro lado sin
 respetar esta estructura, la inyección y la instalación de udev van a fallar con "no encontrado".
@@ -152,7 +152,8 @@ Fuera de ese rango, el botón "Inject" falla con un mensaje claro en vez de inte
 
 **"Injection fails" con el device detectado**
 - Revisá el tamaño del payload (sección de arriba); payloads truncados o corruptos fallan la validación.
-- El motor (`fusee-launcher.py`) se invoca con `-w` (espera activamente a que el device esté listo antes de
+- El motor (`launcher_rcm`) es un binario C que recibe el device path, el payload y el intermezzo como
+  argumentos; el disparo usa el trigger oficial (GET_STATUS con recipient ENDPOINT, URB submit-only), que
   enviar) — si el error persiste, mirá el log de la pestaña correspondiente o `~/.local/share/tegrarcm/log.txt`
   para el detalle exacto que devolvió Python/pyusb.
 - Confirmá que `python3` y el módulo `usb` (paquete `python-pyusb`) están instalados y accesibles en el
