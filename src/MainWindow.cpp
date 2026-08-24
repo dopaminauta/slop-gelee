@@ -42,7 +42,7 @@ MainWindow::MainWindow(QWidget *parent)
     , m_saveAsFavoriteButton(nullptr)
     , m_trayIcon(nullptr)
 {
-    setWindowTitle(tr("TegraRcmGUI"));
+    setWindowTitle(tr("slop gelee"));
     resize(640, 480);
 
     m_favoritesTab = new FavoritesTab(m_favorites, m_tabs);
@@ -105,7 +105,7 @@ QWidget *MainWindow::makePayloadTab()
 void MainWindow::setupTrayIcon()
 {
     m_trayIcon = new QSystemTrayIcon(QIcon(QStringLiteral(":/assets/tegrarcm.svg")), this);
-    m_trayIcon->setToolTip(tr("TegraRcmGUI"));
+    m_trayIcon->setToolTip(tr("slop gelee — Fusee Gelee payload injector"));
 
     auto *menu = new QMenu(this);
     QAction *showHideAction = menu->addAction(tr("Mostrar/Ocultar"));

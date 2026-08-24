@@ -33,26 +33,26 @@ if [ -f "$SCRIPT_DIR/payloads/hekate_ctcaer_6.5.3.bin" ]; then
 fi
 
 # 5. Icono + entrada de menu
-if [ -f "$SCRIPT_DIR/assets/tegrarcm.svg" ]; then
+if [ -f "$SCRIPT_DIR/assets/slop-gelee.svg" ]; then
     mkdir -p ~/.local/share/icons/hicolor/scalable/apps
-    install -m 0644 "$SCRIPT_DIR/assets/tegrarcm.svg" ~/.local/share/icons/hicolor/scalable/apps/
+    install -m 0644 "$SCRIPT_DIR/assets/slop-gelee.svg" ~/.local/share/icons/hicolor/scalable/apps/
 fi
 mkdir -p ~/.local/share/applications
-cat > ~/.local/share/applications/tegrarcm-gui.desktop << EOF
+cat > ~/.local/share/applications/slop-gelee.desktop << EOF
 [Desktop Entry]
 Type=Application
-Name=TegraRcmGUI
-Name[es]=TegraRcmGUI
-Comment=Injectar payloads Fusée Gelée en Nintendo Switch (modo RCM)
-Comment[es]=Inyecta payloads Fusée Gelée en Nintendo Switch (modo RCM)
+Name=slop gelee
+Name[es]=slop gelee
+Comment=Fusée Gelée payload injector for Nintendo Switch (RCM mode)
+Comment[es]=Inyector de payloads Fusée Gelée para Nintendo Switch (modo RCM)
 Exec=tegrarcm-gui
-Icon=tegrarcm
+Icon=slop-gelee
 Terminal=false
 Categories=Utility;System;Qt;
-Keywords=switch;rcm;payload;hekate;fusee;
+Keywords=switch;rcm;payload;hekate;fusee;slop;gelee;
 EOF
 kbuildsycoca6 2>/dev/null || true
-echo "[+] .desktop + icono instalados"
+echo "[+] .desktop + icono instalados (slop gelee)"
 
 # 6. Udev (opcional)
 if [ "${1:-}" = "--with-udev" ]; then
