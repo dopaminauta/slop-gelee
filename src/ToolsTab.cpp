@@ -58,6 +58,7 @@ QString defaultToolPayload(const char *fileName)
 ToolsTab::ToolsTab(Injector *injector, QWidget *parent)
     : QWidget(parent)
     , m_injector(injector)
+    , m_log(new QPlainTextEdit(this))
 {
     m_shofel2.settingsKey = QString::fromLatin1(kShofel2PathKey);
     m_shofel2.displayName = tr("Linux (ShofEL2)");
@@ -75,9 +76,13 @@ ToolsTab::ToolsTab(Injector *injector, QWidget *parent)
         m_biskeydump, tr("Volcar claves BIS"), tr("Dump BIS keys")));
     layout->addWidget(makeToolGroup(
         m_lockpick, tr("Volcar claves (Lockpick_RCM)"), tr("Dump keys (Lockpick_RCM)")));
-    layout->addStretch();
 
-    // El registro vive en la pestana "main" (MainWindow::onLogMessage).
+    m_log->setReadOnly(true);
+    m_log->setMaximumBlockCount(2000);
+    layout->addWidget(new QLabel(tr("Registro:"), this));
+    layout->addWidget(m_log, 1);
+
+    connect(m_injector, &Injector::logMessage, this, &ToolsTab::onLogMessage);
     connect(m_injector, &Injector::payloadInjected, this, &ToolsTab::onPayloadInjected);
     connect(m_injector, &Injector::injectionFailed, this, &ToolsTab::onInjectionFailed);
 }
@@ -155,7 +160,7 @@ void ToolsTab::runTool(Tool &tool)
         setPath(tool, path);
     }
 
-    // El registro se muestra en la pestana "main" (MainWindow::onLogMessage).
+    appendLog(tr("%1: inyectando %2").arg(tool.displayName, path));
     setButtonsEnabled(false);
     m_injector->injectPayload(path);
 }
@@ -167,15 +172,26 @@ void ToolsTab::setButtonsEnabled(bool enabled)
     m_lockpick.runButton->setEnabled(enabled);
 }
 
+void ToolsTab::appendLog(const QString &message)
+{
+    const QString timestamp = QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss"));
+    m_log->appendPlainText(QStringLiteral("[%1] %2").arg(timestamp, message));
+}
+
+void ToolsTab::onLogMessage(const QString &message)
+{
+    appendLog(message);
+}
+
 void ToolsTab::onPayloadInjected(const QString &path, int bytesSent)
 {
     Q_UNUSED(bytesSent)
-    Q_UNUSED(path)
+    appendLog(tr("Payload inyectado: %1").arg(path));
     setButtonsEnabled(true);
 }
 
 void ToolsTab::onInjectionFailed(const QString &errorMessage)
 {
-    Q_UNUSED(errorMessage)
+    appendLog(tr("Error: %1").arg(errorMessage));
     setButtonsEnabled(true);
 }

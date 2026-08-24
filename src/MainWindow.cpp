@@ -106,13 +106,6 @@ QWidget *MainWindow::makePayloadTab()
     layout->addWidget(favLabel);
     layout->addWidget(m_favoritesTab);
 
-    // Registro/log central (antes vivia en la pestana de herramientas).
-    auto *logLabel = new QLabel(tr("Registro:"), widget);
-    m_log = new QPlainTextEdit(widget);
-    m_log->setReadOnly(true);
-    m_log->setMaximumBlockCount(2000);
-    layout->addWidget(logLabel);
-    layout->addWidget(m_log, 1);
     layout->addStretch();
 
     connect(selectButton, &QPushButton::clicked, this, &MainWindow::onSelectPayload);
@@ -273,12 +266,6 @@ void MainWindow::onInjectionFailed(const QString &errorMessage)
 void MainWindow::onLogMessage(const QString &message)
 {
     qDebug() << message;
-    // Log visible en la pestana "main"
-    if (m_log != nullptr) {
-        m_log->appendPlainText(
-            QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss")) +
-            QStringLiteral(" ") + message);
-    }
     // Log persistente para diagnostico (reversible; ayuda a ver el output del
     // motor de inyeccion sin depender de la ventana).
     QDir logDir(QDir::homePath() + QStringLiteral("/.local/share/tegrarcm"));

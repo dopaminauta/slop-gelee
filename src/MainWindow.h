@@ -17,7 +17,6 @@ class Injector;
 class QCloseEvent;
 class QLabel;
 class QLineEdit;
-class QPlainTextEdit;
 class QPushButton;
 class QTabWidget;
 
@@ -59,5 +58,4 @@ private:
     QPushButton *m_injectButton;
     QPushButton *m_saveAsFavoriteButton;
     QSystemTrayIcon *m_trayIcon;
-    QPlainTextEdit *m_log = nullptr;
 };
