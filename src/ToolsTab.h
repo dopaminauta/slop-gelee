@@ -28,7 +28,6 @@ public:
     explicit ToolsTab(Injector *injector, QWidget *parent = nullptr);
 
 private slots:
-    void onLogMessage(const QString &message);
     void onPayloadInjected(const QString &path, int bytesSent);
     void onInjectionFailed(const QString &errorMessage);
 
@@ -45,10 +44,9 @@ private:
     void setPath(Tool &tool, const QString &path);
     void runTool(Tool &tool);
     void setButtonsEnabled(bool enabled);
-    void appendLog(const QString &message);
 
     Injector *m_injector;
     Tool m_shofel2;
     Tool m_biskeydump;
-    QPlainTextEdit *m_log;
+    Tool m_lockpick;
 };

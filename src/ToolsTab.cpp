@@ -25,11 +25,13 @@
 namespace {
 constexpr const char *kShofel2PathKey = "tools/shofel2Path";
 constexpr const char *kBiskeydumpPathKey = "tools/biskeydumpPath";
+constexpr const char *kLockpickPathKey = "tools/lockpickPath";
 
 // Payloads por defecto para cada herramienta (instalados por install.sh en
 // ~/.local/share/tegrarcm/payloads/tools/ o junto al binario en ../payloads/tools/).
 constexpr const char *kShofel2DefaultPayload = "shofel2_coreboot.rom";
 constexpr const char *kBiskeydumpDefaultPayload = "biskeydump_usb.bin";
+constexpr const char *kLockpickDefaultPayload = "lockpick_rcm.bin";
 
 QString defaultToolPayload(const char *fileName)
 {
@@ -56,7 +58,6 @@ QString defaultToolPayload(const char *fileName)
 ToolsTab::ToolsTab(Injector *injector, QWidget *parent)
     : QWidget(parent)
     , m_injector(injector)
-    , m_log(new QPlainTextEdit(this))
 {
     m_shofel2.settingsKey = QString::fromLatin1(kShofel2PathKey);
     m_shofel2.displayName = tr("Linux (ShofEL2)");
@@ -64,18 +65,19 @@ ToolsTab::ToolsTab(Injector *injector, QWidget *parent)
     m_biskeydump.settingsKey = QString::fromLatin1(kBiskeydumpPathKey);
     m_biskeydump.displayName = tr("biskeydump (claves BIS)");
     m_biskeydump.defaultPayload = QString::fromLatin1(kBiskeydumpDefaultPayload);
+    m_lockpick.settingsKey = QString::fromLatin1(kLockpickPathKey);
+    m_lockpick.displayName = tr("Lockpick_RCM (claves)");
+    m_lockpick.defaultPayload = QString::fromLatin1(kLockpickDefaultPayload);
 
     auto *layout = new QVBoxLayout(this);
     layout->addWidget(makeToolGroup(m_shofel2, tr("Correr Linux"), tr("Run Linux (ShofEL2)")));
     layout->addWidget(makeToolGroup(
         m_biskeydump, tr("Volcar claves BIS"), tr("Dump BIS keys")));
+    layout->addWidget(makeToolGroup(
+        m_lockpick, tr("Volcar claves (Lockpick_RCM)"), tr("Dump keys (Lockpick_RCM)")));
+    layout->addStretch();
 
-    m_log->setReadOnly(true);
-    m_log->setMaximumBlockCount(2000);
-    layout->addWidget(new QLabel(tr("Registro:"), this));
-    layout->addWidget(m_log, 1);
-
-    connect(m_injector, &Injector::logMessage, this, &ToolsTab::onLogMessage);
+    // El registro vive en la pestana "main" (MainWindow::onLogMessage).
     connect(m_injector, &Injector::payloadInjected, this, &ToolsTab::onPayloadInjected);
     connect(m_injector, &Injector::injectionFailed, this, &ToolsTab::onInjectionFailed);
 }
@@ -153,7 +155,7 @@ void ToolsTab::runTool(Tool &tool)
         setPath(tool, path);
     }
 
-    appendLog(tr("%1: inyectando %2").arg(tool.displayName, path));
+    // El registro se muestra en la pestana "main" (MainWindow::onLogMessage).
     setButtonsEnabled(false);
     m_injector->injectPayload(path);
 }
@@ -162,28 +164,18 @@ void ToolsTab::setButtonsEnabled(bool enabled)
 {
     m_shofel2.runButton->setEnabled(enabled);
     m_biskeydump.runButton->setEnabled(enabled);
-}
-
-void ToolsTab::appendLog(const QString &message)
-{
-    const QString timestamp = QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss"));
-    m_log->appendPlainText(QStringLiteral("[%1] %2").arg(timestamp, message));
-}
-
-void ToolsTab::onLogMessage(const QString &message)
-{
-    appendLog(message);
+    m_lockpick.runButton->setEnabled(enabled);
 }
 
 void ToolsTab::onPayloadInjected(const QString &path, int bytesSent)
 {
     Q_UNUSED(bytesSent)
-    appendLog(tr("Payload inyectado: %1").arg(path));
+    Q_UNUSED(path)
     setButtonsEnabled(true);
 }
 
 void ToolsTab::onInjectionFailed(const QString &errorMessage)
 {
-    appendLog(tr("Error: %1").arg(errorMessage));
+    Q_UNUSED(errorMessage)
     setButtonsEnabled(true);
 }

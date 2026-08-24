@@ -27,6 +27,7 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QMenu>
+#include <QPlainTextEdit>
 #include <QPushButton>
 #include <QSettings>
 #include <QStatusBar>
@@ -51,7 +52,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     m_favoritesTab = new FavoritesTab(m_favorites, m_tabs);
 
-    m_tabs->addTab(makePayloadTab(), tr("Payloads"));
+    m_tabs->addTab(makePayloadTab(), tr("main"));
     m_tabs->addTab(m_favoritesTab, tr("Favoritos"));
     m_tabs->addTab(new ToolsTab(m_injector, m_tabs), tr("Herramientas"));
     m_tabs->addTab(new SettingsTab(m_tabs), tr("Configuracion"));
@@ -101,6 +102,14 @@ QWidget *MainWindow::makePayloadTab()
     layout->addLayout(selectRow);
     layout->addWidget(m_injectButton);
     layout->addWidget(m_saveAsFavoriteButton);
+
+    // Registro/log central (antes vivia en la pestana de herramientas).
+    auto *logLabel = new QLabel(tr("Registro:"), widget);
+    m_log = new QPlainTextEdit(widget);
+    m_log->setReadOnly(true);
+    m_log->setMaximumBlockCount(2000);
+    layout->addWidget(logLabel);
+    layout->addWidget(m_log, 1);
     layout->addStretch();
 
     connect(selectButton, &QPushButton::clicked, this, &MainWindow::onSelectPayload);
@@ -261,6 +270,12 @@ void MainWindow::onInjectionFailed(const QString &errorMessage)
 void MainWindow::onLogMessage(const QString &message)
 {
     qDebug() << message;
+    // Log visible en la pestana "main"
+    if (m_log != nullptr) {
+        m_log->appendPlainText(
+            QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss")) +
+            QStringLiteral(" ") + message);
+    }
     // Log persistente para diagnostico (reversible; ayuda a ver el output del
     // motor de inyeccion sin depender de la ventana).
     QDir logDir(QDir::homePath() + QStringLiteral("/.local/share/tegrarcm"));
